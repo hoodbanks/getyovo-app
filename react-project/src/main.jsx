@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouterRouter, Routes, Route, HashRouter } from "react-router-dom";
 import App from "./App";
 import SignIn from './pages/SignIn.jsx'
 import Home from './pages/home.jsx'
@@ -11,7 +11,7 @@ import "./index.css"; // Tailwind styles
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouterRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
@@ -19,6 +19,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/signup" element={<SignUp/>} />
       
       </Routes>
-    </BrowserRouter>
+    </HashRouterRouter>
   </React.StrictMode>
 );
