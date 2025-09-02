@@ -16,7 +16,7 @@ export default function vendorlist() {
             <input type="search" name="" id="" placeholder="Enter new address" className="flex items-center bg-gray-200 rounded-[5px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
 
-        <img src="./shopping-cart.png" alt="" />
+        <img src="/shopping-cart.png" alt="" />
     </div>
     <div className="bottom-8 relative justify-center flex">
         <input
@@ -39,7 +39,7 @@ export default function vendorlist() {
         >
           <img
             className="flex justify-center relative left-5"
-            src="./restaurant-2-fill.png"
+            src="/restaurant-2-fill.png"
             alt=""
           />
           <p className="justify-center flex">Restaurant</p>
@@ -50,7 +50,7 @@ export default function vendorlist() {
         >
           <img
             className="relative left-3 flex justify-center"
-            src="./shopping-basket-2-line.png"
+            src="/shopping-basket-2-line.png"
             alt=""
           />
           <p className="justify-center t flex">Shops</p>
@@ -61,7 +61,7 @@ export default function vendorlist() {
           <a className="cursor-pointer" href=""
             ><img
               className="justify-center flex relative left-8"
-              src="./hospital-line.png"
+              src="/hospital-line.png"
               alt=""
             />
             <p className="justify-center flex">Pharmacy</p>
@@ -69,8 +69,8 @@ export default function vendorlist() {
         </div>
       </div>
 
-      <div class="mt-5">
-        <h3  class="text-[20px] font-bold">Nearby Stores</h3>
+      <div className="mt-5">
+        <h3  className="text-[20px] font-bold">Nearby Stores</h3>
       </div>
       
 

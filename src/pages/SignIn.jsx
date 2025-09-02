@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 export default function SignIn() {
     
   return (
@@ -34,10 +34,10 @@ export default function SignIn() {
           <div
             className="flex justify-center p-3 rounded-2xl bg-green-600 active:bg-amber-200 hover:bg-black duration-700 ease-in-out"
           >
-            <button className="rounded-2xl text-white font-bold w-14 ">
-                Sign In
-              </button>
-            
+           
+            <NavLink to="/vendorlist" className="rounded-2xl text-white font-bold w-14 ">  Sign In</NavLink> 
+               
+              
           </div>
         </div>
 
