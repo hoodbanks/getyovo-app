@@ -1,72 +1,79 @@
 import { NavLink } from "react-router-dom";
 
-
-
 export default function SignUp() {
   return (
-<main className="p-3 mt-18 flex flex-col justify-evenly gap-3">
-    <h3
-        className="justify-center text-[#ffa000] flex items-center font-medium text-4xl"
-      >
+    <main className="p-3 mt-20 flex flex-col justify-evenly gap-6 min-h-screen">
+      <h3 className="justify-center text-[#ffa000] flex items-center font-medium text-4xl">
         Create Account
       </h3>
- <p className="justify-center flex text-gray-700 items-center">
+
+      <p className="justify-center flex text-gray-700 items-center">
         Kindly fill your information below
       </p>
-<div className="grid gap-3">
-        <div class="grid">
-          <label class="text-gray-700 font-medium" for="name">Name</label>
+
+      <div className="grid gap-4">
+        {/* Name Field */}
+        <div className="grid">
+          <label className="text-gray-700 font-medium" htmlFor="name">
+            Name
+          </label>
           <input
-            className="border p-2 rounded-[8px]"
+            className="border p-2 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-green-600"
             type="text"
-            name=""
-            id=""
+            id="name"
             placeholder="Kindly enter your full name"
           />
         </div>
 
+        {/* Phone Field */}
         <div className="grid">
-          <label class="text-gray-700 font-medium" for="">Phone Number</label>
+          <label className="text-gray-700 font-medium" htmlFor="number">
+            Phone Number
+          </label>
           <input
-            className="border p-2 rounded-[8px]"
+            className="border p-2 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-green-600"
             type="number"
-            name=""
             id="number"
             placeholder="Kindly enter your phone number"
           />
         </div>
 
-
-
+        {/* Password Field */}
         <div className="grid">
-          <label class="text-gray-700 font-medium" for="">Password</label>
+          <label className="text-gray-700 font-medium" htmlFor="password">
+            Password
+          </label>
           <input
-            className="border p-2 rounded-[8px]"
+            className="border p-2 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-green-600"
             type="password"
-            name=""
             id="password"
             placeholder="**********"
           />
         </div>
       </div>
 
+      {/* Terms & Conditions */}
       <div className="flex items-center gap-2">
         <input
           className="w-4 h-4 text-green-900 border-gray-600 rounded focus:ring-green-600"
           type="checkbox"
-          name=""
-          id=""
+          id="terms"
         />
-        Agree with
-        <a className="text-green-600 hover:underline" href=""> Terms & Condition</a>
-      </div>
-      <div
-        className=" justify-center flex  bg-green-600 active:bg-amber-300 hover:bg-black ease-in-out duration-700 text-white p-3 rounded-2xl"
-      >
-          <NavLink
-          to="/vendorlist"> <button className="w-90 ">Sign Up</button>  </NavLink> 
+        <label htmlFor="terms">
+          Agree with
+          <a className="text-green-600 hover:underline ml-1" href="#">
+            Terms & Conditions
+          </a>
+        </label>
       </div>
 
-</main>
+      {/* Submit Button */}
+      <NavLink
+        to="/vendorlist"
+        className="justify-center flex bg-green-600 active:bg-amber-300 hover:bg-black transition duration-700 ease-in-out text-white p-3 rounded-2xl w-[90%] mx-auto"
+      >
+        Sign Up
+      </NavLink>
+    </main>
   );
 }
