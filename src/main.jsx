@@ -9,6 +9,7 @@ import VendorList from "./pages/vendorlist.jsx";
 import Cart from "./pages/Cart.jsx";
 import ActiveOrders from "./pages/ActiveOrders.jsx";
 
+
 import "./index.css"; // Tailwind styles
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/signup" element={<SignUp />} />
          <Route path="/cart" element={<Cart />} />
            <Route path="/activeorders" element={<ActiveOrders />} />
+            
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
