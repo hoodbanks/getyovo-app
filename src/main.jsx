@@ -6,6 +6,8 @@ import SignIn from './pages/SignIn.jsx';
 import Home from './pages/home.jsx';
 import SignUp from "./pages/SignUP.jsx";
 import VendorList from "./pages/vendorlist.jsx";
+import Cart from "./pages/Cart.jsx";
+import ActiveOrders from "./pages/ActiveOrders.jsx";
 
 import "./index.css"; // Tailwind styles
 
@@ -17,6 +19,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/signin" element={<SignIn />} />
         <Route path="/vendorlist" element={<VendorList />} />
         <Route path="/signup" element={<SignUp />} />
+         <Route path="/cart" element={<Cart />} />
+           <Route path="/activeorders" element={<ActiveOrders />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
