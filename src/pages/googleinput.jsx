@@ -1,50 +1,35 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import BottomNav from "../pages/BottomNav.jsx";
 import { LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
 
 
-// Function to calculate dynamic delivery time
-function getDeliveryTime(lat1, lng1, lat2, lng2) {
-  const distanceKm = getDistanceKm(lat1, lng1, lat2, lng2);
-  const avgSpeedKmH = 30; // average delivery speed in km/h
-  const timeHours = distanceKm / avgSpeedKmH;
-  const timeMinutes = Math.ceil(timeHours * 60);
 
-  // Return a range: ±5 minutes
-  const minTime = Math.max(timeMinutes - 5, 10); // minimum 10 min
-  const maxTime = timeMinutes + 5;
-  return `${minTime}-${maxTime} min`;
-}
-
-
-// Function to calculate distance between two coordinates (Haversine formula)
-function getDistanceKm(lat1, lng1, lat2, lng2) {
-  const toRad = (value) => (value * Math.PI) / 180;
-  const R = 6371; // Radius of Earth in km
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
+// Distance calculation
+const getDistance = (vendor, userLoc) => {
+  const toRad = x => (x * Math.PI) / 180;
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(vendor.lat - userLoc.lat);
+  const dLng = toRad(vendor.lng - userLoc.lng);
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    Math.cos(toRad(userLoc.lat)) *
+      Math.cos(toRad(vendor.lat)) *
+      Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-}
-
-
+};
 
 export default function VendorList() {
-  // Dynamic categories
   const categories = [
     { name: "Restaurant", icon: "/restaurant-2-fill.png", bg: "bg-yellow-100", iconLeft: "left-5" },
     { name: "Shops", icon: "/shopping-basket-2-line.png", bg: "bg-pink-200", iconLeft: "left-3" },
     { name: "Pharmacy", icon: "/hospital-line.png", bg: "bg-blue-300", iconLeft: "left-8" },
   ];
 
-  // Dynamic vendors with coordinates
-  const [vendors] = useState([
-    { id: 1, name: "Roban Mart", category: "Shops", image: "./roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.211, lng: 7.073 },
-    { id: 2, name: "Fresh Mart", category: "Shops", image: "./freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.208, lng: 7.076 },
-    { id: 3, name: "Pharma Plus", category: "Pharmacy", image: "./pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.210, lng: 7.070 },
+  const [vendors, setVendors] = useState([
+    { id: 1, name: "Roban Restaurant", category: "Shops", image: "./roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.211, lng: 7.073 },
+    { id: 2, name: "FreshMart", category: "Shops", image: "./freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.208, lng: 7.076 },
+    { id: 3, name: "PharmaPlus", category: "Pharmacy", image: "./pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.210, lng: 7.070 },
   ]);
 
   const [search, setSearch] = useState("");
@@ -52,11 +37,9 @@ export default function VendorList() {
   const [address, setAddress] = useState("");
   const [userLocation, setUserLocation] = useState(null);
 
-  // Ref for Google Places
   const searchBoxRef = useRef(null);
   const libraries = ["places"];
 
-  // Handle place selection from Google Places API
   const handlePlacesChanged = () => {
     const places = searchBoxRef.current.getPlaces();
     if (places.length > 0) {
@@ -71,40 +54,37 @@ export default function VendorList() {
   };
 
   // Filter vendors by search and category
-  let filteredVendors = vendors.filter((vendor) => {
+  let filteredVendors = vendors.filter(vendor => {
     const matchesSearch = vendor.name.toLowerCase().includes(search.toLowerCase());
-    if (search) return matchesSearch; // Search overrides category
+    if (search) return matchesSearch;
     const matchesCategory = selectedCategory ? vendor.category.includes(selectedCategory) : true;
     return matchesCategory;
   });
 
-  // Sort vendors by distance if userLocation exists and within 40 km
-  const MAX_DISTANCE_KM = 40;
+  // Sort by distance if userLocation exists
   if (userLocation) {
-    filteredVendors = filteredVendors
-      .filter((vendor) => getDistanceKm(vendor.lat, vendor.lng, userLocation.lat, userLocation.lng) <= MAX_DISTANCE_KM)
-      .sort((a, b) => getDistanceKm(a.lat, a.lng, userLocation.lat, userLocation.lng) - getDistanceKm(b.lat, b.lng, userLocation.lat, userLocation.lng));
+    filteredVendors.sort((a, b) => getDistance(a, userLocation) - getDistance(b, userLocation));
   }
 
   return (
-    <main className=" pb-20">
-      {/* Top nav */}
-      <nav className="border-b  border-gray-400 top-0 z-50 h-26 sticky bg-white">
-        <div className="flex relative bottom-4 right-2 items-center justify-evenly p-1">
+    <main className="pt-28 pb-20">
+      {/* Top Nav */}
+      <nav className="border-b border-gray-400 top-0 z-50 h-26 sticky bg-white">
+        <div className="flex relative bottom-4 right-2 items-center justify-between p-1">
           <img src="./yov.png" alt="" className="w-20" />
 
-          {/* Google Places Address Input */}
+          {/* Google Places Input */}
           <LoadScript googleMapsApiKey="AIzaSyDpTvt828_Ph_6xtI6dNzL6uMagjhFdbUY" libraries={libraries}>
             <StandaloneSearchBox
-              onLoad={(ref) => (searchBoxRef.current = ref)}
+              onLoad={ref => (searchBoxRef.current = ref)}
               onPlacesChanged={handlePlacesChanged}
             >
               <input
                 type="text"
                 placeholder="Enter new address"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="flex w-60 bg-gray-200 rounded-[5px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onChange={e => setAddress(e.target.value)}
+                className="flex w-50 bg-gray-200 rounded-[5px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </StandaloneSearchBox>
           </LoadScript>
@@ -117,9 +97,8 @@ export default function VendorList() {
             className="w-90 p-2 rounded-[5px] bg-gray-100"
             type="search"
             placeholder="Search YOVO"
-            id="searchInput"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
       </nav>
@@ -128,7 +107,7 @@ export default function VendorList() {
       <section className="p-2 h-600">
         <h4 className="font-medium text-[20px] mb-1 text-gray-600">Explore Categories</h4>
         <div className="flex justify-between gap-2">
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <div
               key={cat.name}
               className={`justify-center rounded-[4px] p-3 ${cat.bg} w-30 grid active:border-2 hover:border cursor-pointer`}
@@ -146,13 +125,12 @@ export default function VendorList() {
         </div>
 
         <section>
-          {filteredVendors.map((vendor) => (
+          {filteredVendors.map(vendor => (
             <div key={vendor.id} className="w-full p-2 h-28 flex gap-3 justify-evenly bg-green-50 items-center mt-2 rounded">
               <img className="w-30 rounded-[5px]" src={vendor.image} alt={vendor.name} />
               <div>
                 <p className="text-[20px] font-medium">{vendor.name}</p>
-               <p>{userLocation ? getDeliveryTime(vendor.lat, vendor.lng, userLocation.lat, userLocation.lng) : vendor.deliveryTime}</p>
-
+                <p>{vendor.deliveryTime}</p>
                 <p>Rating: {vendor.rating}</p>
               </div>
               <input type="button" value="Check Out" className="active:bg-white p-2 bg-gray-200 rounded-[4px]" />
@@ -160,7 +138,7 @@ export default function VendorList() {
           ))}
 
           {filteredVendors.length === 0 && (
-            <p className="text-center mt-4 text-gray-500">No stores found within 40 km.</p>
+            <p className="text-center mt-4 text-gray-500">No stores found in this location.</p>
           )}
         </section>
       </section>
