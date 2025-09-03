@@ -132,7 +132,7 @@ export default function VendorList() {
                   placeholder="Enter new address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="flex w-full bg-gray-200 rounded-[5px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="flex w-[100%] bg-gray-200 rounded-[5px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </StandaloneSearchBox>
 
