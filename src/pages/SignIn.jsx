@@ -230,7 +230,7 @@ export default function VendorList() {
               </div>
             );
           })}
-          {filteredVendors.length === 0 && <p className="text-center mt-6 text-gray-500">None nearby.</p>}
+          {filteredVendors.length === 0 && <p className="text-center mt-6 text-gray-500">None nearby</p>}
         </div>
       </section>
 
