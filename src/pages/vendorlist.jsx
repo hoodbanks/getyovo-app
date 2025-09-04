@@ -162,7 +162,7 @@ export default function VendorList() {
 
         {/* CATEGORIES — single horizontal row, scrollable + snap + hidden scrollbar */}
         <div className="px-3 pb-3">
-          <div className="flex gap-2 overflow-x-auto flex-nowrap no-scrollbar snap-x snap-mandatory py-1 -mx-1 px-1">
+          <div className="flex gap-2 justify-evenly overflow-x-auto flex-nowrap no-scrollbar snap-x snap-mandatory py-1 -mx-1 px-1">
             {["All", "Restaurant", "Shops", "Pharmacy"].map((c) => {
               const active = selectedCategory === c;
               return (
@@ -186,7 +186,7 @@ export default function VendorList() {
 
       {/* CONTENT */}
       <section className="p-3">
-        <h3 className="text-[20px] font-bold text-[#0F3D2E] mb-2">Nearby vendors</h3>
+        <h3 className="text-[20px] font-bold text-black mb-2">Nearby vendors</h3>
 
         <div className="space-y-3">
           {filteredVendors.map((vendor) => {
