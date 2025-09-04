@@ -126,7 +126,7 @@ export default function VendorList() {
   }
 
   return (
-    <main className="pb-20 bg-[#F7F9F5]">
+    <main className="pb-20 bg-[#F7F9F5] h-500">
       {/* HEADER (top row fixed to h-16) */}
       <nav className="border-b border-gray-200 top-0 z-50 sticky bg-white">
         <div className="h-16 flex items-center justify-evenly px-2">
