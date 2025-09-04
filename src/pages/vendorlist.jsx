@@ -126,7 +126,7 @@ export default function VendorList() {
   }
 
   return (
-    <main className="pb-20 bg-[#F7F9F5] h-500">
+    <main className="pb-20 bg-[#F7F9F5]">
       {/* HEADER (top row fixed to h-16) */}
       <nav className="border-b border-gray-200 top-0 z-50 sticky bg-white">
         <div className="h-16 flex items-center justify-evenly px-2">
@@ -163,7 +163,7 @@ export default function VendorList() {
 
         {/* CATEGORIES — single horizontal row, scrollable on phone */}
         <div className="px-3 pb-3">
-          <div className="flex gap-2 overflow-x-auto flex-nowrap py-1 -mx-1 px-1">
+          <div className="flex gap-2 justify-around overflow-x-auto flex-nowrap py-1 -mx-1 px-1">
             {["All", "Restaurant", "Shops", "Pharmacy"].map((c) => {
               const active = selectedCategory === c;
               return (
