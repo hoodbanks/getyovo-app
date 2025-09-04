@@ -35,7 +35,7 @@ export default function SignIn() {
             className="flex justify-center p-3 rounded-2xl bg-green-600 active:bg-amber-200 hover:bg-black duration-700 ease-in-out"
           >
            
-            <NavLink to="/vendor" className="rounded-2xl text-white font-bold w-14 ">  Sign In</NavLink> 
+            <NavLink to="/vendorlist" className="rounded-2xl text-white font-bold w-14 ">  Sign In</NavLink> 
                
               
           </div>
