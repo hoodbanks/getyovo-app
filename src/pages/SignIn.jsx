@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import BottomNav from "../pages/BottomNav.jsx";
 import { LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
 
-/* Helpers (unchanged) */
+/* Helpers */
 function getDistanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -23,7 +23,7 @@ function getDeliveryTime(lat1, lng1, lat2, lng2) {
   return `${minTime}-${maxTime} min`;
 }
 
-/* Tiny stars (unchanged) */
+/* Stars */
 function Stars({ value = 4.5, outOf = 5 }) {
   const full = Math.floor(value);
   const half = value - full >= 0.5;
@@ -106,7 +106,7 @@ export default function VendorList() {
     );
   };
 
-  // Filtering (same, with "All")
+  // Filtering (with "All")
   let filteredVendors = vendors.filter((v) => {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase());
     if (search) return matchesSearch;
@@ -126,7 +126,7 @@ export default function VendorList() {
 
   return (
     <main className="pb-20 bg-[#F7F9F5]">
-      {/* HEADER (top row fixed to h-16) */}
+      {/* HEADER (h-16) */}
       <nav className="border-b border-gray-200 top-0 z-50 sticky bg-white">
         <div className="h-16 flex items-center justify-evenly px-2">
           <img src="./yov.png" alt="GetYovo" className="w-20" />
@@ -160,9 +160,9 @@ export default function VendorList() {
           />
         </div>
 
-        {/* CATEGORIES — single horizontal row, scrollable + snap + hidden scrollbar */}
+        {/* CATEGORIES — pill chips */}
         <div className="px-3 pb-3">
-          <div className="flex gap-2 justify-evenly overflow-x-auto flex-nowrap no-scrollbar snap-x snap-mandatory py-1 -mx-1 px-1">
+          <div className="flex gap-2 overflow-x-auto flex-nowrap no-scrollbar py-1">
             {["All", "Restaurant", "Shops", "Pharmacy"].map((c) => {
               const active = selectedCategory === c;
               return (
@@ -170,9 +170,8 @@ export default function VendorList() {
                   key={c}
                   onClick={() => setSelectedCategory(c)}
                   className={[
-                    "flex-none inline-flex items-center px-4 py-2 rounded-full text-sm transition snap-start",
-                    active ? "bg-[#0F3D2E] text-white"
-                           : "bg-[#EEF2EF] text-[#0F3D2E] hover:bg-[#E6EBE8]"
+                    "flex-none inline-flex items-center px-5 h-11 rounded-full text-[15px] font-medium transition",
+                    active ? "bg-[#0F3D2E] text-white" : "bg-[#E9EFEA] text-[#0F3D2E] hover:bg-[#E2E8E4]"
                   ].join(" ")}
                   aria-pressed={active}
                 >
@@ -188,7 +187,7 @@ export default function VendorList() {
       <section className="p-3">
         <h3 className="text-[20px] font-bold text-[#0F3D2E] mb-2">Nearby vendors</h3>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {filteredVendors.map((vendor) => {
             const eta = userLocation
               ? getDeliveryTime(vendor.lat, vendor.lng, userLocation.lat, userLocation.lng)
@@ -197,46 +196,44 @@ export default function VendorList() {
             return (
               <div
                 key={vendor.id}
-                className="w-full min-h-[7rem] p-3 flex flex-wrap items-center justify-between gap-3 bg-white
-                           border border-[#0F3D2E]/10 rounded-2xl overflow-hidden"
+                className="mx-3 p-3 rounded-[20px] bg-white border border-[#0F3D2E]/12"
               >
-                <img
-                  loading="lazy"
-                  className="h-24 w-32 object-cover rounded-xl flex-shrink-0"
-                  src={vendor.image}
-                  alt={vendor.name}
-                />
-
-                {/* text column wraps fully */}
-                <div className="flex-1 basis-0">
-                  <p className="text-[17px] font-semibold text-[#0F3D2E]
-                                whitespace-normal break-all sm:break-words leading-snug">
-                    {vendor.name}
-                  </p>
-                  <p className="text-sm text-[#0F3D2E]/70">{eta}</p>
-                  <div className="mt-1 flex items-center gap-1">
-                    <Stars value={vendor.rating} />
-                    <span className="text-sm text-[#0F3D2E]/70">{vendor.rating.toFixed(1)}</span>
+                {/* top row */}
+                <div className="flex items-center gap-3">
+                  <img
+                    loading="lazy"
+                    src={vendor.image}
+                    alt={vendor.name}
+                    className="h-24 w-32 object-cover rounded-[16px] flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[18px] font-semibold text-[#0F3D2E] whitespace-normal break-words">
+                      {vendor.name}
+                    </p>
+                    <p className="text-sm text-[#0F3D2E]/70">{eta}</p>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Stars value={vendor.rating} />
+                      <span className="text-sm text-[#0F3D2E]/70">{vendor.rating.toFixed(1)}</span>
+                    </div>
                   </div>
                 </div>
 
+                {/* full-width CTA */}
                 <button
                   onClick={() => (window.location.href = `/vendor/${vendor.id}`)}
-                  className="px-4 py-2 rounded-xl bg-[#0F3D2E] text-white text-sm font-medium hover:opacity-90
-                             flex-shrink-0 w-full sm:w-auto text-center"
+                  className="mt-3 w-full h-12 rounded-[16px] bg-[#0F3D2E] text-white text-[16px] font-semibold"
                 >
                   Open store
                 </button>
               </div>
             );
           })}
-          {filteredVendors.length === 0 && <p className="text-center mt-6 text-gray-500">None nearby</p>}
+          {filteredVendors.length === 0 && <p className="text-center mt-6 text-gray-500">None nearby.</p>}
         </div>
       </section>
 
       <BottomNav />
 
-      {/* hidden scrollbar for categories */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
