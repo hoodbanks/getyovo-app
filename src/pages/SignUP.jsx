@@ -111,7 +111,7 @@ export default function SignUp() {
             <span className="text-gray-700">
               I agree to the{" "}
               <Link to="/terms" className="text-[#1b5e20] font-semibold hover:underline">
-                Terms & Conditions
+                Terms & Condition
               </Link>
             </span>
           </label>
