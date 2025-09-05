@@ -9,6 +9,10 @@ export default function VerifyOTP() {
   const expires = Number(sessionStorage.getItem("fp_expires") || 0);
   const attempts = Number(sessionStorage.getItem("fp_attempts") || 0);
 
+localStorage.setItem("resetOtpVerified", "true"); // or sessionStorage.setItem("fp_verified","true")
+navigate("/new-password", { replace: true });
+
+
   useEffect(() => {
     if (!phone) navigate("/forgot", { replace: true });
   }, [phone, navigate]);

@@ -1,5 +1,4 @@
-// src/pages/SignIn.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 function normalizePhone(input) {
@@ -13,7 +12,16 @@ function normalizePhone(input) {
 export default function SignIn() {
   const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
+  const [info, setInfo] = useState("");
   const navigate = useNavigate();
+
+  // Show message if coming from successful OTP verification
+  useEffect(() => {
+    if (sessionStorage.getItem("fp_success") === "1") {
+      setInfo("Phone verified. You can now sign in.");
+      sessionStorage.removeItem("fp_success");
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,7 +33,7 @@ export default function SignIn() {
     // TODO: validate with your backend
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("phone", phoneE164);
-    navigate("/vendorlist", { replace: true }); // replace so back-swipe skips this page
+    navigate("/vendorlist", { replace: true });
   };
 
   return (
@@ -33,6 +41,12 @@ export default function SignIn() {
       <div className="w-80 bg-white rounded-2xl p-6 shadow">
         <img src="/yov.png" alt="GetYovo" className="w-20 mx-auto mb-4" />
         <h1 className="text-xl font-bold text-[#1b5e20] text-center mb-3">Sign In</h1>
+
+        {info && (
+          <div className="mb-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-2">
+            {info}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -64,13 +78,13 @@ export default function SignIn() {
             Sign up
           </Link>
         </p>
-             <p className="text-right flex justify-center text-sm">
-  <Link to="/forgot" className="text-[#ff0000] font-semibold hover:underline">
-    Forgot password?
-  </Link>
-</p>
+
+        <p className="text-center text-sm mt-2">
+          <Link to="/reset-password" className="text-[#ff0000] font-semibold hover:underline">
+            Forgot password?
+          </Link>
+        </p>
       </div>
-      
     </main>
   );
 }
