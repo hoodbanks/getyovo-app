@@ -5,16 +5,15 @@ export default function VerifyOTP() {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
 
-  const phone = sessionStorage.getItem("fp_phone");
+  const phone   = sessionStorage.getItem("fp_phone");
   const expires = Number(sessionStorage.getItem("fp_expires") || 0);
-  const attempts = Number(sessionStorage.getItem("fp_attempts") || 0);
+  const [attempts, setAttempts] = useState(() =>
+    Number(sessionStorage.getItem("fp_attempts") || 5)
+  );
 
-localStorage.setItem("resetOtpVerified", "true"); // or sessionStorage.setItem("fp_verified","true")
-navigate("/new-password", { replace: true });
-
-
+  // Guard: if user skipped ResetPassword
   useEffect(() => {
-    if (!phone) navigate("/forgot", { replace: true });
+    if (!phone) navigate("/reset-password", { replace: true });
   }, [phone, navigate]);
 
   const handleVerify = (e) => {
@@ -30,24 +29,29 @@ navigate("/new-password", { replace: true });
       return;
     }
 
-    if (code.trim() === real) {
-      navigate("/reset-password", { replace: true });
+    if ((code || "").trim() === real) {
+      // success → go back to SignIn with a small info banner
+      sessionStorage.setItem("fp_success", "1");
+      navigate("/signin", { replace: true });
     } else {
-      const left = attempts - 1;
-      sessionStorage.setItem("fp_attempts", String(left));
-      alert(`Incorrect code. Attempts left: ${left}`);
+      const next = attempts - 1;
+      setAttempts(next);
+      sessionStorage.setItem("fp_attempts", String(next));
+      alert(`Incorrect code. Attempts left: ${next}`);
     }
   };
 
   const handleResend = () => {
+    // Demo resend (replace with backend)
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
     const newExpires = Date.now() + 5 * 60 * 1000;
     sessionStorage.setItem("fp_code", newCode);
     sessionStorage.setItem("fp_expires", String(newExpires));
     sessionStorage.setItem("fp_attempts", "5");
+    setAttempts(5);
 
     console.log("📨 OTP re-sent to", phone, "→", newCode);
-    alert(`Demo OTP (remove in prod): ${newCode}`);
+    alert(`Demo OTP (remove in production): ${newCode}`);
   };
 
   const masked = phone ? phone.replace(/.(?=.{4})/g, "•") : "";
@@ -71,6 +75,7 @@ navigate("/new-password", { replace: true });
               placeholder="••••••"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              autoFocus
             />
           </div>
 
@@ -92,7 +97,7 @@ navigate("/new-password", { replace: true });
 
         <p className="text-center text-sm mt-4 text-gray-600">
           Wrong number?{" "}
-          <Link to="/forgot" className="text-[#1b5e20] font-semibold hover:underline">
+          <Link to="/reset-password" className="text-[#1b5e20] font-semibold hover:underline">
             Change phone
           </Link>
         </p>

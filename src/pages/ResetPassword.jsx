@@ -1,87 +1,172 @@
-import { useEffect, useState } from "react";
+// src/pages/ResetPassword.jsx
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+
+function normalizePhone(input) {
+  const digits = String(input).replace(/[^\d+]/g, "");
+  if (digits.startsWith("+")) return digits;
+  if (digits.startsWith("0")) return "+234" + digits.slice(1); // NG example
+  if (digits.startsWith("234")) return "+" + digits;
+  return digits; // fallback
+}
 
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const phone = sessionStorage.getItem("fp_phone");
-  useEffect(() => {
-    if (!phone) navigate("/forgot", { replace: true });
-  }, [phone, navigate]);
 
+  // Step 1: request OTP
+  const [phone, setPhone] = useState(() => sessionStorage.getItem("fp_phone") || "");
+  // Step 2: set new password (visible after OTP verification)
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const valid = pw.length >= 6 && pw === pw2;
 
-  const handleReset = (e) => {
+  // Read verification flag from session (set by VerifyOTP after success)
+  const verified = sessionStorage.getItem("fp_verified") === "1";
+
+  // Decide which mode to show
+  const mode = useMemo(() => (verified ? "setpw" : "request"), [verified]);
+
+  useEffect(() => {
+    // if verified but phone is missing, fallback to request step
+    if (verified && !sessionStorage.getItem("fp_phone")) {
+      sessionStorage.removeItem("fp_verified");
+    }
+  }, [verified]);
+
+  const sendOtp = (e) => {
     e.preventDefault();
-    if (!valid) return;
+    const phoneE164 = normalizePhone(phone);
+    if (!phoneE164 || phoneE164.length < 8) {
+      alert("Enter a valid phone number");
+      return;
+    }
+    // Generate demo OTP + store in session
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-    // Mock “save” password (replace with your backend)
-    localStorage.setItem(`user:${phone}:password`, pw);
+    sessionStorage.setItem("fp_phone", phoneE164);
+    sessionStorage.setItem("fp_code", otp);
+    sessionStorage.setItem("fp_expires", String(expires));
+    sessionStorage.setItem("fp_attempts", "5");
+    sessionStorage.removeItem("fp_verified"); // ensure clean slate
 
-    // Clear the flow state
+    // In prod: send OTP via SMS
+    console.log("DEBUG OTP:", otp);
+    alert(`Demo OTP (remove in production): ${otp}`);
+
+    navigate("/verify-otp", { replace: true });
+  };
+
+  const handleSetPassword = (e) => {
+    e.preventDefault();
+    if (pw.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+    if (pw !== pw2) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    // TODO: Call your backend API to actually set the new password for fp_phone
+    const doneFor = sessionStorage.getItem("fp_phone");
+    console.log("✅ Demo password reset for:", doneFor);
+
+    // Clean up reset session data
     sessionStorage.removeItem("fp_phone");
     sessionStorage.removeItem("fp_code");
     sessionStorage.removeItem("fp_expires");
     sessionStorage.removeItem("fp_attempts");
+    sessionStorage.removeItem("fp_verified");
 
-    alert("Password updated. Please sign in.");
+    // Show info banner on SignIn
+    sessionStorage.setItem("fp_success", "1");
     navigate("/signin", { replace: true });
   };
 
+  const masked = phone ? phone.replace(/.(?=.{4})/g, "•") : "";
+
   return (
     <main className="min-h-screen grid place-items-center bg-[#637865]">
-      <div className="w-[22rem] max-w-[90vw] bg-white rounded-2xl p-6 shadow-xl">
-        <img src="/yov.png" alt="GetYovo" className="w-20 mx-auto mb-2" />
-        <h1 className="text-2xl font-bold text-[#1b5e20] text-center">Set new password</h1>
-        <p className="text-center text-sm text-gray-500 mb-4">Use a strong password</p>
+      <div className="w-80 bg-white rounded-2xl p-6 shadow">
+        <img src="/yov.png" alt="GetYovo" className="w-24 mx-auto mb-4" />
 
-        <form onSubmit={handleReset} className="space-y-3">
-          <div className="grid gap-1">
-            <label className="text-sm text-gray-700" htmlFor="pw">New password</label>
-            <input
-              id="pw"
-              className="w-full p-3 rounded-xl bg-gray-100 outline-none focus:ring-2 focus:ring-[#1b5e20]/30"
-              type="password"
-              placeholder="********"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              autoComplete="new-password"
-            />
-          </div>
+        {mode === "request" ? (
+          <>
+            <h1 className="text-xl font-bold text-[#1b5e20] text-center mb-1">Reset Password</h1>
+            <p className="text-center text-sm text-gray-600 mb-4">
+              Enter the phone number linked to your account.
+            </p>
 
-          <div className="grid gap-1">
-            <label className="text-sm text-gray-700" htmlFor="pw2">Confirm password</label>
-            <input
-              id="pw2"
-              className="w-full p-3 rounded-xl bg-gray-100 outline-none focus:ring-2 focus:ring-[#1b5e20]/30"
-              type="password"
-              placeholder="********"
-              value={pw2}
-              onChange={(e) => setPw2(e.target.value)}
-              autoComplete="new-password"
-            />
-            {pw2.length > 0 && !valid && (
-              <span className="text-xs text-red-600">Passwords must match and be at least 6 characters</span>
-            )}
-          </div>
+            <form onSubmit={sendOtp} className="space-y-3">
+              <input
+                className="w-full p-3 rounded-lg bg-gray-100 outline-none"
+                inputMode="tel"
+                type="tel"
+                placeholder="Phone number (e.g. 0803..., +234...)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="w-full p-3 rounded-xl bg-[#1b5e20] text-white font-semibold hover:bg-[#388e3c] duration-200"
+              >
+                Send OTP
+              </button>
+            </form>
 
-          <button
-            type="submit"
-            disabled={!valid}
-            className={`w-full p-3 rounded-xl font-semibold text-white transition
-                        ${valid ? "bg-[#1b5e20] hover:bg-[#388e3c]" : "bg-gray-300 cursor-not-allowed"}`}
-          >
-            Save password
-          </button>
-        </form>
+            <p className="text-center text-sm mt-3 text-gray-600">
+              Remembered?{" "}
+              <Link to="/signin" className="text-[#1b5e20] font-semibold">
+                Sign in
+              </Link>
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-xl font-bold text-[#1b5e20] text-center mb-1">Set New Password</h1>
+            <p className="text-center text-sm text-gray-600 mb-4">
+              Phone verified for <span className="font-semibold">{masked}</span>
+            </p>
 
-        <p className="text-center text-sm mt-4 text-gray-600">
-          Remembered it?{" "}
-          <Link to="/signin" className="text-[#1b5e20] font-semibold hover:underline">
-            Sign in
-          </Link>
-        </p>
+            <form onSubmit={handleSetPassword} className="space-y-3">
+              <input
+                className="w-full p-3 rounded-lg bg-gray-100 outline-none"
+                type="password"
+                placeholder="New password (min 6 chars)"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                autoFocus
+              />
+              <input
+                className="w-full p-3 rounded-lg bg-gray-100 outline-none"
+                type="password"
+                placeholder="Confirm new password"
+                value={pw2}
+                onChange={(e) => setPw2(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="w-full p-3 rounded-xl bg-[#1b5e20] text-white font-semibold hover:bg-[#388e3c] duration-200"
+              >
+                Save new password
+              </button>
+            </form>
+
+            <p className="text-center text-sm mt-3 text-gray-600">
+              Not you?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.removeItem("fp_verified");
+                  navigate("/reset-password", { replace: true });
+                }}
+                className="text-[#1b5e20] font-semibold hover:underline"
+              >
+                Change number
+              </button>
+            </p>
+          </>
+        )}
       </div>
     </main>
   );
