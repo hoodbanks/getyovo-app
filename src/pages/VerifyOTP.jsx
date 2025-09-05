@@ -1,3 +1,4 @@
+// src/pages/VerifyOTP.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -5,13 +6,10 @@ export default function VerifyOTP() {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
 
-  const phone   = sessionStorage.getItem("fp_phone");
+  const phone = sessionStorage.getItem("fp_phone");
   const expires = Number(sessionStorage.getItem("fp_expires") || 0);
-  const [attempts, setAttempts] = useState(() =>
-    Number(sessionStorage.getItem("fp_attempts") || 5)
-  );
+  const attempts = Number(sessionStorage.getItem("fp_attempts") || 0);
 
-  // Guard: if user skipped ResetPassword
   useEffect(() => {
     if (!phone) navigate("/reset-password", { replace: true });
   }, [phone, navigate]);
@@ -29,29 +27,25 @@ export default function VerifyOTP() {
       return;
     }
 
-    if ((code || "").trim() === real) {
-      // success → go back to SignIn with a small info banner
-      sessionStorage.setItem("fp_success", "1");
-      navigate("/signin", { replace: true });
+    if (code.trim() === real) {
+      sessionStorage.setItem("fp_verified", "1");
+      navigate("/reset-password", { replace: true });
     } else {
-      const next = attempts - 1;
-      setAttempts(next);
-      sessionStorage.setItem("fp_attempts", String(next));
-      alert(`Incorrect code. Attempts left: ${next}`);
+      const left = attempts - 1;
+      sessionStorage.setItem("fp_attempts", String(left));
+      alert(`Incorrect code. Attempts left: ${left}`);
     }
   };
 
   const handleResend = () => {
-    // Demo resend (replace with backend)
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
     const newExpires = Date.now() + 5 * 60 * 1000;
     sessionStorage.setItem("fp_code", newCode);
     sessionStorage.setItem("fp_expires", String(newExpires));
     sessionStorage.setItem("fp_attempts", "5");
-    setAttempts(5);
 
     console.log("📨 OTP re-sent to", phone, "→", newCode);
-    alert(`Demo OTP (remove in production): ${newCode}`);
+    alert(`Demo OTP (remove in prod): ${newCode}`);
   };
 
   const masked = phone ? phone.replace(/.(?=.{4})/g, "•") : "";

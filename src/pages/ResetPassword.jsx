@@ -5,28 +5,24 @@ import { useNavigate, Link } from "react-router-dom";
 function normalizePhone(input) {
   const digits = String(input).replace(/[^\d+]/g, "");
   if (digits.startsWith("+")) return digits;
-  if (digits.startsWith("0")) return "+234" + digits.slice(1); // NG example
+  if (digits.startsWith("0")) return "+234" + digits.slice(1); // example for NG
   if (digits.startsWith("234")) return "+" + digits;
-  return digits; // fallback
+  return digits;
 }
 
 export default function ResetPassword() {
   const navigate = useNavigate();
 
-  // Step 1: request OTP
   const [phone, setPhone] = useState(() => sessionStorage.getItem("fp_phone") || "");
-  // Step 2: set new password (visible after OTP verification)
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
 
-  // Read verification flag from session (set by VerifyOTP after success)
+  // Switch UI: request (send OTP) or setpw (after VerifyOTP)
   const verified = sessionStorage.getItem("fp_verified") === "1";
-
-  // Decide which mode to show
   const mode = useMemo(() => (verified ? "setpw" : "request"), [verified]);
 
+  // If verified but phone missing (hard refresh), reset the flow
   useEffect(() => {
-    // if verified but phone is missing, fallback to request step
     if (verified && !sessionStorage.getItem("fp_phone")) {
       sessionStorage.removeItem("fp_verified");
     }
@@ -39,17 +35,17 @@ export default function ResetPassword() {
       alert("Enter a valid phone number");
       return;
     }
-    // Generate demo OTP + store in session
+
+    // Demo OTP flow
     const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
+    const expires = Date.now() + 5 * 60 * 1000;
 
     sessionStorage.setItem("fp_phone", phoneE164);
     sessionStorage.setItem("fp_code", otp);
     sessionStorage.setItem("fp_expires", String(expires));
     sessionStorage.setItem("fp_attempts", "5");
-    sessionStorage.removeItem("fp_verified"); // ensure clean slate
+    sessionStorage.removeItem("fp_verified");
 
-    // In prod: send OTP via SMS
     console.log("DEBUG OTP:", otp);
     alert(`Demo OTP (remove in production): ${otp}`);
 
@@ -67,19 +63,18 @@ export default function ResetPassword() {
       return;
     }
 
-    // TODO: Call your backend API to actually set the new password for fp_phone
     const doneFor = sessionStorage.getItem("fp_phone");
-    console.log("✅ Demo password reset for:", doneFor);
+    // TODO: call backend to set new password for `doneFor`
+    console.log("✅ Password reset for:", doneFor);
 
-    // Clean up reset session data
+    // cleanup
     sessionStorage.removeItem("fp_phone");
     sessionStorage.removeItem("fp_code");
     sessionStorage.removeItem("fp_expires");
     sessionStorage.removeItem("fp_attempts");
     sessionStorage.removeItem("fp_verified");
-
-    // Show info banner on SignIn
     sessionStorage.setItem("fp_success", "1");
+
     navigate("/signin", { replace: true });
   };
 

@@ -68,10 +68,12 @@ export default function ForgotPassword() {
           </button>
         </form>
 
-        <p className="text-center text-sm mt-4 text-gray-600">
-          Remembered it?{" "}
-          <Link to="/signin" className="text-[#1b5e20] font-semibold hover:underline">Sign in</Link>
-        </p>
+        <p className="text-right flex justify-center text-sm">
+  <Link to="/reset-password" className="text-[#ff0000] font-semibold hover:underline">
+    Forgot password?
+  </Link>
+</p>
+
       </div>
     </main>
   );
