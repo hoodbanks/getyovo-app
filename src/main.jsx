@@ -13,6 +13,7 @@ import ActiveOrders from "./pages/ActiveOrders.jsx";
 import Profile from "./pages/Profile.jsx"; // ← NEW
 import "./index.css";
 import CompletedOrders from "./pages/CompletedOrders.jsx";
+import Search from "./pages/Search.jsx";
 
 function RequireAuth({ children }) {
   const authed = localStorage.getItem("isLoggedIn") === "true";
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/activeorders" element={<RequireAuth><ActiveOrders /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} /> {/* ← NEW */}
 <Route path="/completed-orders" element={<RequireAuth><CompletedOrders /></RequireAuth>} />
+<Route path="/search" element={<RequireAuth><Search /></RequireAuth>} />
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

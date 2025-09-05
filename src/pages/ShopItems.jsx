@@ -1,7 +1,7 @@
 // src/pages/ShopItems.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import BottomNav from "../pages/BottomNav.jsx";
+import BottomNav from "./BottomNav.jsx";
 
 /* ---------- CATEGORY SETS BY VENDOR TYPE ---------- */
 const CATEGORY_SETS = {
@@ -76,7 +76,6 @@ export default function ShopItems() {
 
   const vendorName = state?.vendorName || "Vendor Items";
   const vendorCategory = state?.vendorCategory || "Shops";
-
   const TABS = CATEGORY_SETS[vendorCategory] || CATEGORY_SETS.Shops;
 
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -331,67 +330,6 @@ export default function ShopItems() {
             ))
           )}
         </section>
-      )}
-
-      {/* --------- CUSTOMIZATION MODAL (Restaurant, non-Drinks) --------- */}
-      {customizing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-xl relative animate-pop">
-            <button
-              onClick={closeCustomize}
-              className="absolute top-3 right-4 text-2xl leading-none text-gray-500"
-              aria-label="Close"
-            >
-              ×
-            </button>
-
-            <div className="px-6 pt-6 text-center">
-              <h2 className="text-2xl font-bold text-[#0F3D2E]">{customizing.title}</h2>
-              <img
-                src={customizing.img}
-                alt={customizing.title}
-                className="mx-auto mt-3 h-28 w-48 object-cover rounded-2xl"
-              />
-              <p className="mt-2 text-[#0F3D2E]/60">Choose add-ons</p>
-            </div>
-
-            <div className="px-6 mt-4">
-              <h3 className="text-lg font-semibold text-[#0F3D2E] mb-2">Add-ons</h3>
-              <div className="space-y-3">
-                {DEFAULT_ADDONS.map((a) => (
-                  <div
-                    key={a.id}
-                    className="border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="text-[17px] font-semibold text-[#0F3D2E]">{a.label}</div>
-                      <div className="text-[#0F3D2E]/50 -mt-0.5">{formatNaira(a.price)}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => subAddon(a.id)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">–</button>
-                      <div className="w-6 text-center">{addonCounts[a.id] || 0}</div>
-                      <button onClick={() => addAddon(a.id, a.max)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">+</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-6 mt-5 mb-6 flex items-center justify-between">
-              <div className="text-lg font-semibold text-[#0F3D2E]">Total</div>
-              <div className="text-2xl font-bold text-[#0F3D2E]">{formatNaira(modalTotal)}</div>
-            </div>
-
-            <div className="px-6 pb-6">
-              <button
-                onClick={addCustomizedToCart}
-                className="w-full h-12 rounded-2xl bg-[#D24A0A] text-white text-[16px] font-semibold hover:opacity-95 active:scale-[0.98] transition"
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <BottomNav />

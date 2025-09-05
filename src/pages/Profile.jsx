@@ -1,11 +1,19 @@
-import { useMemo } from "react";
+// src/pages/Profile.jsx
+import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import BottomNav from "../pages/BottomNav.jsx";
 
 const COMPLETED_KEY = "completedOrders";
 
+// 👉 Update these to your real contacts
+const SUPPORT_PHONE = "+2348012345678";
+const SUPPORT_EMAIL = "support@getyovo.com";
+const WHATSAPP_NUMBER = "+2348012345678";
+
 export default function Profile() {
   const navigate = useNavigate();
+  const [showContact, setShowContact] = useState(false);
+
   const userName  = localStorage.getItem("userName")  || "GetYovo User";
   const userPhone = localStorage.getItem("userPhone") || "—";
   const completedCount = useMemo(() => {
@@ -16,6 +24,15 @@ export default function Profile() {
   const logout = () => {
     localStorage.setItem("isLoggedIn", "false");
     navigate("/signin", { replace: true });
+  };
+
+  const copy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard");
+    } catch {
+      alert(text); // fallback
+    }
   };
 
   return (
@@ -42,8 +59,9 @@ export default function Profile() {
         </div>
       </section>
 
-      {/* Quick links / cards */}
+      {/* Cards */}
       <section className="max-w-screen-sm mx-auto px-4 space-y-3">
+        {/* Completed Orders */}
         <NavLink
           to="/completed-orders"
           className="block bg-white rounded-2xl border border-[#0F3D2E]/12 p-4 hover:bg-[#F8FAF9] transition"
@@ -56,6 +74,95 @@ export default function Profile() {
             <span className="text-[#0F3D2E]/60 text-xl">›</span>
           </div>
         </NavLink>
+
+        {/* Contact Us (expand on click) */}
+        <button
+          type="button"
+          onClick={() => setShowContact(s => !s)}
+          className="w-full text-left bg-white rounded-2xl border border-[#0F3D2E]/12 p-4 hover:bg-[#F8FAF9] transition"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold text-[#0F3D2E]">Contact Us</div>
+              <div className="text-sm text-[#0F3D2E]/70">We’re here to help</div>
+            </div>
+            <span className={`text-[#0F3D2E]/60 text-xl transition-transform ${showContact ? "rotate-90" : ""}`}>
+              ›
+            </span>
+          </div>
+
+          {showContact && (
+            <div className="mt-4 pt-4 border-t border-[#0F3D2E]/10 space-y-3">
+              {/* Phone */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-[#0F3D2E]/60">Phone</div>
+                  <a href={`tel:${SUPPORT_PHONE}`} className="font-medium text-[#0F3D2E]">
+                    {SUPPORT_PHONE}
+                  </a>
+                </div>
+                <div className="flex gap-2">
+                  <a href={`tel:${SUPPORT_PHONE}`} className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm">
+                    Call
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); copy(SUPPORT_PHONE); }}
+                    className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              {/* WhatsApp */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-[#0F3D2E]/60">WhatsApp</div>
+                  <div className="font-medium text-[#0F3D2E]">{WHATSAPP_NUMBER}</div>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-[#25D366] text-white text-sm"
+                  >
+                    Chat
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); copy(WHATSAPP_NUMBER); }}
+                    className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-[#0F3D2E]/60">Email</div>
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-[#0F3D2E]">
+                    {SUPPORT_EMAIL}
+                  </a>
+                </div>
+                <div className="flex gap-2">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm">
+                    Email
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); copy(SUPPORT_EMAIL); }}
+                    className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-xs text-[#0F3D2E]/60">Hours: 8:00–20:00 (Mon–Sat)</div>
+            </div>
+          )}
+        </button>
       </section>
 
       <BottomNav />
