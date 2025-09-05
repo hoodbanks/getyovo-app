@@ -14,7 +14,7 @@ export default function Home() {
 <button className="bg-[#1b5e20] hover:bg-[#388e3c] duration-700 ease-in-out p-3 w-50 rounded-[20px]">Sign In
     </button></NavLink>
 
-    <NavLink to="signup">
+    <NavLink to="/signup">
 <button className="bg-amber-300 hover:bg-[#ffa000] duration-700 ease-in-out p-3 w-50 rounded-[20px] text-[#1b5e20]">Sign Up</button>
 </NavLink>
 </div>
