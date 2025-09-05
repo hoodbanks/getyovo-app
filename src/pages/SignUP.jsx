@@ -97,7 +97,7 @@ export default function SignUp() {
               </button>
             </div>
             {!validPw && pw.length > 0 && (
-              <span className="text-xs text-red-600">At least 6 characters</span>
+              <span className="text-xs text-red-600">At least 6 characters.</span>
             )}
           </div>
 
