@@ -8,7 +8,7 @@ import VendorList from "./pages/vendorlist.jsx"; // <-- your updated list
 import Cart from "./pages/Cart.jsx";
 import ActiveOrders from "./pages/ActiveOrders.jsx";
 import "./index.css";
-
+import ShopItems from "./pages/ShopItems.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         {/* Redirect legacy paths to the new home */}
         <Route path="/vendorlist" element={<Navigate to="/" replace />} />
         <Route path="/home" element={<Navigate to="/" replace />} />
-
+<Route path="/vendor/:id" element={<ShopItems />} />
         {/* Catch-all → home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

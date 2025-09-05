@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import BottomNav from "../pages/BottomNav.jsx";
 import { LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
+import { useNavigate } from "react-router-dom"; // ← NEW
 
 /* Helpers (unchanged) */
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -57,10 +58,13 @@ function Stars({ value = 4.5, outOf = 5 }) {
 }
 
 export default function VendorList() {
+  const navigate = useNavigate(); // ← NEW
+
   const [vendors] = useState([
-    { id: 1, name: "Roban Mart", category: "Shops", image: "./roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.2239, lng: 7.1185 },
-    { id: 2, name: "FreshMart", category: "Shops", image: "./freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.2242, lng: 7.1190 },
-    { id: 3, name: "PharmaPlus", category: "Pharmacy", image: "./pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
+    { id: 1, name: "Roban Mart", category: "Shops", image: "/roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.2239, lng: 7.1185 },
+    { id: 2, name: "FreshMart", category: "Shops", image: "/freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.2242, lng: 7.1190 },
+    { id: 3, name: "PharmaPlus", category: "Pharmacy", image: "/pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
+     { id: 4, name: "Candles", category: "Restaurant", image: "/candles.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
   ]);
 
   const [search, setSearch] = useState(() => localStorage.getItem("search") || "");
@@ -186,7 +190,7 @@ export default function VendorList() {
 
       {/* CONTENT */}
       <section className="p-3">
-        <h3 className="text-[20px] font-bold text-black mb-2">Nearby vendors</h3>
+        <h3 className="text-[20px] font-bold text-[#0F3D2E] mb-2">Nearby vendors</h3>
 
         <div className="space-y-3">
           {filteredVendors.map((vendor) => {
@@ -221,7 +225,11 @@ export default function VendorList() {
                 </div>
 
                 <button
-                  onClick={() => (window.location.href = `/vendor/${vendor.id}`)}
+                  onClick={() =>
+                    navigate(`/vendor/${vendor.id}`, {
+                      state: { vendorName: vendor.name, vendorCategory: vendor.category }, // ← pass to items page
+                    })
+                  }
                   className="px-4 py-2 rounded-xl bg-[#0F3D2E] text-white text-sm font-medium hover:opacity-90
                              flex-shrink-0 w-full sm:w-auto text-center"
                 >
