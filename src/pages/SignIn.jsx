@@ -64,7 +64,13 @@ export default function SignIn() {
             Sign up
           </Link>
         </p>
+             <p className="text-right flex justify-center text-sm">
+  <Link to="/forgot" className="text-[#ff0000] font-semibold hover:underline">
+    Forgot password?
+  </Link>
+</p>
       </div>
+      
     </main>
   );
 }

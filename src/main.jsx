@@ -10,8 +10,9 @@ import VendorList from "./pages/vendorlist.jsx";
 import ShopItems from "./pages/ShopItems.jsx";
 import Cart from "./pages/Cart.jsx";
 import ActiveOrders from "./pages/ActiveOrders.jsx";
-import Profile from "./pages/Profile.jsx";   // ← ADD THIS
+import Profile from "./pages/Profile.jsx"; // ← NEW
 import "./index.css";
+import CompletedOrders from "./pages/CompletedOrders.jsx";
 
 function RequireAuth({ children }) {
   const authed = localStorage.getItem("isLoggedIn") === "true";
@@ -37,8 +38,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/vendor/:id" element={<RequireAuth><ShopItems /></RequireAuth>} />
         <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
         <Route path="/activeorders" element={<RequireAuth><ActiveOrders /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} /> {/* ← ADD THIS */}
-
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} /> {/* ← NEW */}
+<Route path="/completed-orders" element={<RequireAuth><CompletedOrders /></RequireAuth>} />
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

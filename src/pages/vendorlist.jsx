@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import BottomNav from "../pages/BottomNav.jsx";
 import { LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
-import { useNavigate } from "react-router-dom"; // ← NEW
+import { useNavigate } from "react-router-dom";
 
 /* Helpers (unchanged) */
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -58,13 +58,13 @@ function Stars({ value = 4.5, outOf = 5 }) {
 }
 
 export default function VendorList() {
-  const navigate = useNavigate(); // ← NEW
+  const navigate = useNavigate();
 
   const [vendors] = useState([
     { id: 1, name: "Roban Mart", category: "Shops", image: "/roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.2239, lng: 7.1185 },
     { id: 2, name: "FreshMart", category: "Shops", image: "/freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.2242, lng: 7.1190 },
     { id: 3, name: "PharmaPlus", category: "Pharmacy", image: "/pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
-     { id: 4, name: "Candles", category: "Restaurant", image: "/candles.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
+    { id: 4, name: "Candles", category: "Restaurant", image: "/candles.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
   ]);
 
   const [search, setSearch] = useState(() => localStorage.getItem("search") || "");
@@ -84,7 +84,7 @@ export default function VendorList() {
   const libraries = ["places"];
 
   const handlePlacesChanged = () => {
-    const places = searchBoxRef.current.getPlaces();
+    const places = searchBoxRef.current.getPlaces?.() || [];
     if (places.length > 0) {
       const place = places[0];
       setAddress(place.formatted_address);
@@ -133,7 +133,7 @@ export default function VendorList() {
       {/* HEADER (top row fixed to h-16) */}
       <nav className="border-b border-gray-200 top-0 z-50 sticky bg-white">
         <div className="h-16 flex items-center justify-evenly px-2">
-          <img src="./yov.png" alt="GetYovo" className="w-20" />
+          <img src="/yov.png" alt="GetYovo" className="w-20" />
           <LoadScript googleMapsApiKey="AIzaSyDpTvt828_Ph_6xtI6dNzL6uMagjhFdbUY" libraries={libraries}>
             <div className="relative flex items-center w-60">
               <StandaloneSearchBox onLoad={(ref) => (searchBoxRef.current = ref)} onPlacesChanged={handlePlacesChanged}>
@@ -165,16 +165,17 @@ export default function VendorList() {
         </div>
 
         {/* CATEGORIES — single horizontal row, scrollable + snap + hidden scrollbar */}
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-3 animate-rise">
           <div className="flex gap-2 justify-evenly overflow-x-auto flex-nowrap no-scrollbar snap-x snap-mandatory py-1 -mx-1 px-1">
-            {["All", "Restaurant", "Shops", "Pharmacy"].map((c) => {
+            {["All", "Restaurant", "Shops", "Pharmacy"].map((c, i) => {
               const active = selectedCategory === c;
               return (
                 <button
                   key={c}
                   onClick={() => setSelectedCategory(c)}
+                  style={{ animationDelay: `${70 * i}ms` }}
                   className={[
-                    "flex-none inline-flex items-center px-4 py-2 rounded-full text-sm transition snap-start",
+                    "flex-none inline-flex items-center px-4 py-2 rounded-full text-sm transition snap-start animate-rise",
                     active ? "bg-[#0F3D2E] text-white"
                            : "bg-[#EEF2EF] text-[#0F3D2E] hover:bg-[#E6EBE8]"
                   ].join(" ")}
@@ -193,7 +194,7 @@ export default function VendorList() {
         <h3 className="text-[20px] font-bold text-[#0F3D2E] mb-2">Nearby vendors</h3>
 
         <div className="space-y-3">
-          {filteredVendors.map((vendor) => {
+          {filteredVendors.map((vendor, i) => {
             const eta = userLocation
               ? getDeliveryTime(vendor.lat, vendor.lng, userLocation.lat, userLocation.lng)
               : vendor.deliveryTime;
@@ -201,8 +202,9 @@ export default function VendorList() {
             return (
               <div
                 key={vendor.id}
-                className="w-full min-h-[7rem] p-3 flex flex-wrap items-center justify-between gap-3 bg-white
-                           border border-[#0F3D2E]/10 rounded-2xl overflow-hidden"
+                style={{ animationDelay: `${60 * i}ms` }}
+                className="animate-rise-slow w-full min-h-[7rem] p-3 flex flex-wrap items-center justify-between gap-3 bg-white
+                           border border-[#0F3D2E]/10 rounded-2xl overflow-hidden will-change-transform will-change-opacity"
               >
                 <img
                   loading="lazy"
@@ -227,10 +229,11 @@ export default function VendorList() {
                 <button
                   onClick={() =>
                     navigate(`/vendor/${vendor.id}`, {
-                      state: { vendorName: vendor.name, vendorCategory: vendor.category }, // ← pass to items page
+                      state: { vendorName: vendor.name, vendorCategory: vendor.category },
                     })
                   }
-                  className="px-4 py-2 rounded-xl bg-[#0F3D2E] text-white text-sm font-medium hover:opacity-90
+                  className="px-4 py-2 rounded-xl bg-[#0F3D2E] text-white text-sm font-medium
+                             hover:opacity-90 active:scale-[0.98] transition transform
                              flex-shrink-0 w-full sm:w-auto text-center"
                 >
                   Open store
@@ -244,10 +247,25 @@ export default function VendorList() {
 
       <BottomNav />
 
-      {/* hidden scrollbar for categories */}
+      {/* hidden scrollbar + animations */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes rise {
+          0% { opacity: 0; transform: translateY(12px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes riseSlow {
+          0% { opacity: 0; transform: translateY(14px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-rise { animation: rise .50s ease-out both; }
+        .animate-rise-slow { animation: riseSlow .65s ease-out both; }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
+        }
       `}</style>
     </main>
   );

@@ -1,6 +1,7 @@
+// src/pages/ShopItems.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import BottomNav from "../pages/BottomNav.jsx"; // or "./BottomNav.jsx" if this file is in /pages
+import BottomNav from "../pages/BottomNav.jsx";
 
 /* ---------- CATEGORY SETS BY VENDOR TYPE ---------- */
 const CATEGORY_SETS = {
@@ -23,14 +24,12 @@ const RESTAURANT_ITEMS = [
   { id: "r3", vendorId: "2", title: "Chicken Suya", price: 1500, category: "Grills", img: "/items/suya.jpg" },
   { id: "r4", vendorId: "2", title: "Eba & Ogbono", price: 1300, category: "Swallow", img: "/items/ogbono.jpg" },
 
-  // --- Items for your new restaurant: vendorId "4" (Candles) ---
+  // Candles (vendorId "4")
   { id: "r41", vendorId: "4", title: "Ogbono Soup", price: 1300, category: "Soups", img: "/ogono.jpeg" },
   { id: "r42", vendorId: "4", title: "Jollof Rice & Chicken", price: 1800, category: "Rice", img: "/jollofrice.jpeg" },
   { id: "r43", vendorId: "4", title: "Goat Meat Pepper Soup", price: 1900, category: "Soups", img: "/peppersoup.jpeg" },
   { id: "r44", vendorId: "4", title: "Eba & Egusi", price: 1600, category: "Swallow", img: "/egusi.jpeg" },
 
-
-  
   { id: "r45", vendorId: "4", title: "Coca-Cola 50cl",     price: 500,  category: "Drinks", img: "/coke.jpeg" },
   { id: "r46", vendorId: "4", title: "Fanta 50cl",         price: 500,  category: "Drinks", img: "/fanta.jpeg" },
   { id: "r47", vendorId: "4", title: "Sprite 50cl",        price: 500,  category: "Drinks", img: "/sprite.jpeg" },
@@ -40,14 +39,13 @@ const RESTAURANT_ITEMS = [
 ];
 
 const PHARMACY_ITEMS = [
-  { id: "p1", vendorId: "3", title: "Paracetamol 500mg", price: 350, category: "OTC", img: "/items/para.jpg" },
+  { id: "p1", vendorId: "3", title: "Paracetamol 500mg", price: 350, category: "OTC", img: "/paracetamol.jpeg" },
   { id: "p2", vendorId: "3", title: "Amoxicillin 500mg", price: 1200, category: "Prescription", img: "/items/amox.jpg", rx: true },
-  { id: "p3", vendorId: "3", title: "Vitamin C 1000mg", price: 800, category: "Vitamins", img: "/items/vitc.jpg" },
+  { id: "p3", vendorId: "3", title: "Vitamin C 1000mg", price: 800, category: "Vitamins", img: "/vitc.jpeg" },
   { id: "p4", vendorId: "3", title: "Digital Thermometer", price: 2500, category: "Devices", img: "/items/thermo.jpg" },
 ];
 
 /* ---------- DEFAULT ADD-ONS for Restaurant (non-Drinks) ---------- */
-// You can override per item later if needed.
 const DEFAULT_ADDONS = [
   { id: "meat", label: "Meat", price: 500, max: 2 },
   { id: "fish", label: "Fish", price: 700, max: 2 },
@@ -70,29 +68,29 @@ function addToCartLS(vendorId, vendorName, payload) {
   localStorage.setItem(key, JSON.stringify(cart));
 }
 
-/* ---------- MAIN PAGE ---------- */
-export default function VendorItems() {
+/* ---------- PAGE ---------- */
+export default function ShopItems() {
   const { id: vendorId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const vendorName = state?.vendorName || "Vendor Items";
-  const vendorCategory = state?.vendorCategory || "Shops"; // fallback
+  const vendorCategory = state?.vendorCategory || "Shops";
 
   const TABS = CATEGORY_SETS[vendorCategory] || CATEGORY_SETS.Shops;
 
   const [activeTab, setActiveTab] = useState(TABS[0]);
-  const [qty, setQty] = useState({}); // used by Shops/Pharmacy and Drinks
-  const [customizing, setCustomizing] = useState(null); // selected Restaurant item for modal, or null
-  const [addonCounts, setAddonCounts] = useState({});    // { addonId: number }
+  const [qty, setQty] = useState({});
+  const [customizing, setCustomizing] = useState(null);
+  const [addonCounts, setAddonCounts] = useState({});
 
-  // Reset active tab whenever vendor type changes
+  // reset tab on vendor type change
   useEffect(() => {
     const first = (CATEGORY_SETS[vendorCategory] || CATEGORY_SETS.Shops)[0];
     setActiveTab(first);
   }, [vendorCategory]);
 
-  // Build items list for the selected vendor + tab
+  // items for current vendor + tab
   const items = useMemo(() => {
     const src =
       vendorCategory === "Restaurant" ? RESTAURANT_ITEMS :
@@ -100,32 +98,25 @@ export default function VendorItems() {
                                        SHOP_ITEMS;
 
     const scoped = src.filter((i) => !vendorId || String(i.vendorId) === String(vendorId));
-
-    const byTab =
-      activeTab === "All"
-        ? scoped
-        : scoped.filter((i) => (i.category || "").toLowerCase() === activeTab.toLowerCase());
-
-    return byTab;
+    return activeTab === "All"
+      ? scoped
+      : scoped.filter((i) => (i.category || "").toLowerCase() === activeTab.toLowerCase());
   }, [vendorCategory, vendorId, activeTab]);
 
-  // Default qty = 1 whenever visible items change (for non-modal flows)
+  // default qty = 1 per visible item
   useEffect(() => {
     const m = {};
     items.forEach((i) => (m[i.id] = 1));
     setQty(m);
   }, [items]);
 
-  /* ---------- Qty helpers (non-modal) ---------- */
   const dec = (id) => setQty((q) => ({ ...q, [id]: Math.max((q[id] || 1) - 1, 1) }));
   const inc = (id) => setQty((q) => ({ ...q, [id]: (q[id] || 1) + 1 }));
 
-  /* ---------- Modal helpers ---------- */
+  // modal helpers
   const openCustomize = (item) => {
-    // Only for restaurant non-Drinks
-    if (state?.vendorCategory !== "Restaurant" || item.category === "Drinks") return;
+    if (vendorCategory !== "Restaurant" || (item.category || "").toLowerCase() === "drinks") return;
     setCustomizing(item);
-    // reset add-ons each time
     const init = {};
     DEFAULT_ADDONS.forEach((a) => (init[a.id] = 0));
     setAddonCounts(init);
@@ -151,27 +142,19 @@ export default function VendorItems() {
 
   const addCustomizedToCart = () => {
     if (!customizing) return;
-
-    // Build options payload from add-ons
     const chosen = DEFAULT_ADDONS
       .filter((a) => (addonCounts[a.id] || 0) > 0)
-      .map((a) => ({
-        id: a.id,
-        label: a.label,
-        qty: addonCounts[a.id],
-        unitPrice: a.price,
-      }));
+      .map((a) => ({ id: a.id, label: a.label, qty: addonCounts[a.id], unitPrice: a.price }));
 
     addToCartLS(vendorId, vendorName, {
       id: customizing.id,
       title: customizing.title,
       img: customizing.img,
       basePrice: customizing.price,
-      price: modalTotal,     // base + add-ons
-      qty: 1,                // main dish qty = 1 for this flow
+      price: modalTotal,
+      qty: 1,
       options: chosen.length ? { addons: chosen } : undefined,
     });
-
     closeCustomize();
   };
 
@@ -188,18 +171,16 @@ export default function VendorItems() {
     });
   };
 
-  
-
   return (
     <main className="min-h-screen bg-[#F7F9F5] pb-20">
       {/* HEADER */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 animate-rise">
         <div className="max-w-screen-sm mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-[#0F3D2E] text-lg">←</button>
+          <button onClick={() => navigate(-1)} className="text-[#0F3D2E] text-lg active:scale-[0.96] transition">←</button>
           <h1 className="text-2xl font-bold text-[#0F3D2E]">{vendorName}</h1>
         </div>
 
-        {/* TABS depend on vendor type */}
+        {/* TABS */}
         <div className="max-w-screen-sm mx-auto px-2">
           <div className="flex gap-6 overflow-x-auto no-scrollbar px-2">
             {(CATEGORY_SETS[vendorCategory] || CATEGORY_SETS.Shops).map((tab) => {
@@ -208,8 +189,8 @@ export default function VendorItems() {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-3 text-[16px] font-semibold whitespace-nowrap border-b-2 ${
-                    active ? "text-[#0F3D2E] border-[#0F3D2E]" : "text-[#0F3D2E]/60 border-transparent"
+                  className={`py-3 text-[16px] font-semibold whitespace-nowrap border-b-2 transition ${
+                    active ? "text-[#0F3D2E] border-[#0F3D2E]" : "text-[#0F3D2E]/60 border-transparent hover:text-[#0F3D2E]"
                   }`}
                 >
                   {tab}
@@ -220,15 +201,18 @@ export default function VendorItems() {
         </div>
       </header>
 
-      {/* BODY: view switches by type */}
-      {state?.vendorCategory === "Pharmacy" ? (
-        /* --------- PHARMACY LIST (compact rows) --------- */
+      {/* BODY */}
+      {vendorCategory === "Pharmacy" ? (
         <section className="max-w-screen-sm mx-auto p-4 space-y-3">
           {items.length === 0 ? (
             <p className="text-center text-sm text-gray-500">No items yet.</p>
           ) : (
-            items.map((item) => (
-              <article key={item.id} className="bg-white rounded-xl border border-[#0F3D2E]/12 p-3 flex gap-3 items-center">
+            items.map((item, idx) => (
+              <article
+                key={item.id}
+                style={{ animationDelay: `${60 * idx}ms` }}
+                className="bg-white rounded-xl border border-[#0F3D2E]/12 p-3 flex gap-3 items-center animate-rise-slow"
+              >
                 <img src={item.img} alt={item.title} className="h-16 w-16 object-cover rounded-md" loading="lazy" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -239,13 +223,13 @@ export default function VendorItems() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                    <button className="px-3 py-2 text-[18px]" onClick={() => dec(item.id)}>–</button>
+                    <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => dec(item.id)}>–</button>
                     <div className="w-10 text-center">{qty[item.id] || 1}</div>
-                    <button className="px-3 py-2 text-[18px]" onClick={() => inc(item.id)}>+</button>
+                    <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => inc(item.id)}>+</button>
                   </div>
                   <button
                     onClick={() => addSimpleToCart(item)}
-                    className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                    className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition"
                   >
                     Add
                   </button>
@@ -254,43 +238,37 @@ export default function VendorItems() {
             ))
           )}
         </section>
-      ) : state?.vendorCategory === "Restaurant" ? (
-        /* --------- RESTAURANT GRID --------- */
+      ) : vendorCategory === "Restaurant" ? (
         <section className="max-w-screen-sm mx-auto p-4 grid grid-cols-2 gap-4">
           {items.length === 0 ? (
             <p className="col-span-2 text-center text-sm text-gray-500">No items yet.</p>
           ) : (
-            items.map((item) => {
+            items.map((item, idx) => {
               const isDrink = (item.category || "").toLowerCase() === "drinks";
               return (
                 <article
                   key={item.id}
-                  className="bg-white rounded-2xl border border-[#0F3D2E]/12 overflow-hidden"
+                  style={{ animationDelay: `${50 * idx}ms` }}
+                  className="bg-white rounded-2xl border border-[#0F3D2E]/12 overflow-hidden animate-rise-slow"
                 >
-                  <div
-                    className={!isDrink ? "cursor-pointer" : ""}
-                    onClick={() => !isDrink && openCustomize(item)}
-                  >
+                  <div className={!isDrink ? "cursor-pointer" : ""} onClick={() => !isDrink && openCustomize(item)}>
                     <img src={item.img} alt={item.title} className="h-28 w-full object-cover" loading="lazy" />
                     <div className="p-3">
                       <h3 className="text-[16px] font-semibold text-[#0F3D2E] leading-snug">{item.title}</h3>
-                      <div className="mt-1 text-[15px] font-semibold text-[#0F3D2E]">
-                        {formatNaira(item.price)}
-                      </div>
+                      <div className="mt-1 text-[15px] font-semibold text-[#0F3D2E]">{formatNaira(item.price)}</div>
                     </div>
                   </div>
 
-                  {/* Drinks keep simple add-to-cart; others use modal */}
                   {isDrink ? (
                     <div className="px-3 pb-3 flex items-center gap-2">
                       <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                        <button className="px-3 py-2 text-[18px]" onClick={() => dec(item.id)}>–</button>
+                        <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => dec(item.id)}>–</button>
                         <div className="w-10 text-center">{qty[item.id] || 1}</div>
-                        <button className="px-3 py-2 text-[18px]" onClick={() => inc(item.id)}>+</button>
+                        <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => inc(item.id)}>+</button>
                       </div>
                       <button
                         onClick={() => addSimpleToCart(item)}
-                        className="ml-auto px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                        className="ml-auto px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition"
                       >
                         Add to Cart
                       </button>
@@ -299,9 +277,9 @@ export default function VendorItems() {
                     <div className="px-3 pb-3">
                       <button
                         onClick={() => openCustomize(item)}
-                        className="w-full px-3 py-2 rounded-lg bg-[#0F3D2E] text-white text-sm font-semibold hover:opacity-90"
+                        className="w-full px-3 py-2 rounded-lg bg-[#0F3D2E] text-white text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition"
                       >
-                       Add
+                        Add
                       </button>
                     </div>
                   )}
@@ -311,13 +289,16 @@ export default function VendorItems() {
           )}
         </section>
       ) : (
-        /* --------- SHOPS GRID --------- */
         <section className="max-w-screen-sm mx-auto p-4 grid grid-cols-2 gap-4">
           {items.length === 0 ? (
             <p className="col-span-2 text-center text-sm text-gray-500">No items yet.</p>
           ) : (
-            items.map((item) => (
-              <article key={item.id} className="bg-white rounded-2xl border border-[#0F3D2E]/12 overflow-hidden">
+            items.map((item, idx) => (
+              <article
+                key={item.id}
+                style={{ animationDelay: `${50 * idx}ms` }}
+                className="bg-white rounded-2xl border border-[#0F3D2E]/12 overflow-hidden animate-rise-slow"
+              >
                 <div className="relative">
                   <img src={item.img} alt={item.title} className="h-28 w-full object-cover" loading="lazy" />
                   {item.badge && (
@@ -329,24 +310,18 @@ export default function VendorItems() {
                 <div className="p-3">
                   <h3 className="text-[16px] font-semibold text-[#0F3D2E] leading-snug">{item.title}</h3>
                   <div className="mt-1">
-                    {item.oldPrice && (
-                      <div className="text-sm text-[#0F3D2E]/60 line-through">
-                        {formatNaira(item.oldPrice)}
-                      </div>
-                    )}
-                    <div className="text-[15px] font-semibold text-[#0F3D2E]">
-                      {formatNaira(item.price)}
-                    </div>
+                    {item.oldPrice && <div className="text-sm text-[#0F3D2E]/60 line-through">{formatNaira(item.oldPrice)}</div>}
+                    <div className="text-[15px] font-semibold text-[#0F3D2E]">{formatNaira(item.price)}</div>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                      <button className="px-3 py-2 text-[18px]" onClick={() => dec(item.id)}>–</button>
+                      <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => dec(item.id)}>–</button>
                       <div className="w-10 text-center">{qty[item.id] || 1}</div>
-                      <button className="px-3 py-2 text-[18px]" onClick={() => inc(item.id)}>+</button>
+                      <button className="px-3 py-2 text-[18px] active:scale-[0.96]" onClick={() => inc(item.id)}>+</button>
                     </div>
                     <button
                       onClick={() => addSimpleToCart(item)}
-                      className="ml-auto px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                      className="ml-auto px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition"
                     >
                       Add to Cart
                     </button>
@@ -361,8 +336,7 @@ export default function VendorItems() {
       {/* --------- CUSTOMIZATION MODAL (Restaurant, non-Drinks) --------- */}
       {customizing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-xl relative">
-            {/* Close */}
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-xl relative animate-pop">
             <button
               onClick={closeCustomize}
               className="absolute top-3 right-4 text-2xl leading-none text-gray-500"
@@ -371,7 +345,6 @@ export default function VendorItems() {
               ×
             </button>
 
-            {/* Title & image */}
             <div className="px-6 pt-6 text-center">
               <h2 className="text-2xl font-bold text-[#0F3D2E]">{customizing.title}</h2>
               <img
@@ -379,13 +352,11 @@ export default function VendorItems() {
                 alt={customizing.title}
                 className="mx-auto mt-3 h-28 w-48 object-cover rounded-2xl"
               />
-              <p className="mt-2 text-[#0F3D2E]/60">with assorted meat</p>
+              <p className="mt-2 text-[#0F3D2E]/60">Choose add-ons</p>
             </div>
 
-            {/* Add-ons */}
             <div className="px-6 mt-4">
-              <h3 className="text-lg font-semibold text-[#0F3D2E] mb-2">Choose Add-ons</h3>
-
+              <h3 className="text-lg font-semibold text-[#0F3D2E] mb-2">Add-ons</h3>
               <div className="space-y-3">
                 {DEFAULT_ADDONS.map((a) => (
                   <div
@@ -397,26 +368,15 @@ export default function VendorItems() {
                       <div className="text-[#0F3D2E]/50 -mt-0.5">{formatNaira(a.price)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => subAddon(a.id)}
-                        className="h-10 w-10 rounded-lg border border-gray-300 text-xl"
-                      >
-                        –
-                      </button>
+                      <button onClick={() => subAddon(a.id)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">–</button>
                       <div className="w-6 text-center">{addonCounts[a.id] || 0}</div>
-                      <button
-                        onClick={() => addAddon(a.id, a.max)}
-                        className="h-10 w-10 rounded-lg border border-gray-300 text-xl"
-                      >
-                        +
-                      </button>
+                      <button onClick={() => addAddon(a.id, a.max)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">+</button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Total + CTA */}
             <div className="px-6 mt-5 mb-6 flex items-center justify-between">
               <div className="text-lg font-semibold text-[#0F3D2E]">Total</div>
               <div className="text-2xl font-bold text-[#0F3D2E]">{formatNaira(modalTotal)}</div>
@@ -425,7 +385,7 @@ export default function VendorItems() {
             <div className="px-6 pb-6">
               <button
                 onClick={addCustomizedToCart}
-                className="w-full h-12 rounded-2xl bg-[#D24A0A] text-white text-[16px] font-semibold hover:opacity-95"
+                className="w-full h-12 rounded-2xl bg-[#D24A0A] text-white text-[16px] font-semibold hover:opacity-95 active:scale-[0.98] transition"
               >
                 Add to Cart
               </button>
@@ -434,26 +394,22 @@ export default function VendorItems() {
         </div>
       )}
 
-      {/* hide scrollbar utility */}
+      <BottomNav />
+
+      {/* Utilities + animations */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes rise { 0% {opacity:0; transform: translateY(12px)} 100% {opacity:1; transform: translateY(0)} }
+        @keyframes riseSlow { 0% {opacity:0; transform: translateY(16px)} 100% {opacity:1; transform: translateY(0)} }
+        @keyframes pop { 0% {opacity:0; transform: scale(.96)} 100% {opacity:1; transform: scale(1)} }
+        .animate-rise { animation: rise .5s ease-out both }
+        .animate-rise-slow { animation: riseSlow .65s ease-out both }
+        .animate-pop { animation: pop .2s ease-out both }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
+        }
       `}</style>
-      
-
-     <main className="min-h-screen bg-[#F7F9F5] pb-20">
-    {/* ...all your header/sections/modal... */}
-
-    <BottomNav />
-
-    <style>{`
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    `}</style>
-  </main>
-
     </main>
-
-    
   );
 }

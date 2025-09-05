@@ -168,12 +168,12 @@ export default function Cart() {
   return (
     <main className="relative min-h-screen bg-[#F7F9F5] pb-20">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 animate-rise">
         <div className="max-w-screen-sm mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#0F3D2E]">Cart</h1>
           <NavLink
             to="/activeorders"
-            className="text-sm font-semibold text-white bg-[#0F3D2E] px-3 py-2 rounded-lg"
+            className="text-sm font-semibold text-white bg-[#0F3D2E] px-3 py-2 rounded-lg hover:opacity-95 active:scale-[0.98] transition"
           >
             Active Orders
           </NavLink>
@@ -182,11 +182,11 @@ export default function Cart() {
 
       {/* Empty state */}
       {!stores.length && (
-        <section className="max-w-screen-sm mx-auto p-6 text-center">
+        <section className="max-w-screen-sm mx-auto p-6 text-center animate-rise">
           <p className="text-[#0F3D2E]/70">Your cart is empty.</p>
           <NavLink
             to="/vendorlist"
-            className="inline-block mt-4 px-4 py-2 rounded-lg bg-[#0F3D2E] text-white"
+            className="inline-block mt-4 px-4 py-2 rounded-lg bg-[#0F3D2E] text-white hover:opacity-95 active:scale-[0.98] transition"
           >
             Browse vendors
           </NavLink>
@@ -203,7 +203,11 @@ export default function Cart() {
           const deliveryFee = meta.deliveryFee ?? 1300;
 
           return (
-            <article key={store.vendorId || storeIdx} className="p-4 bg-white rounded-2xl border border-[#0F3D2E]/12">
+            <article
+              key={store.vendorId || storeIdx}
+              style={{ animationDelay: `${70 * storeIdx}ms` }}
+              className="p-4 bg-white rounded-2xl border border-[#0F3D2E]/12 animate-rise-slow will-change-transform will-change-opacity"
+            >
               <h2 className="font-bold text-lg text-[#0F3D2E]">
                 {store.vendorName || "Store"}
               </h2>
@@ -253,14 +257,14 @@ export default function Cart() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleQuantityChange(storeIdx, itemIdx, -1)}
-                        className="px-3 py-1.5 bg-gray-200 rounded"
+                        className="px-3 py-1.5 bg-gray-200 rounded active:scale-[0.96] transition"
                       >
                         –
                       </button>
                       <span className="w-6 text-center">{product.qty || 1}</span>
                       <button
                         onClick={() => handleQuantityChange(storeIdx, itemIdx, 1)}
-                        className="px-3 py-1.5 bg-gray-200 rounded"
+                        className="px-3 py-1.5 bg-gray-200 rounded active:scale-[0.96] transition"
                       >
                         +
                       </button>
@@ -273,7 +277,7 @@ export default function Cart() {
                       <button
                         onClick={() => handleRemoveProduct(storeIdx, itemIdx)}
                         title="Remove"
-                        className="mt-1 inline-flex text-red-600 hover:text-red-700"
+                        className="mt-1 inline-flex text-red-600 hover:text-red-700 active:scale-[0.96] transition"
                       >
                         <TrashIcon className="w-5 h-5" />
                       </button>
@@ -296,7 +300,7 @@ export default function Cart() {
 
               <button
                 onClick={() => handlePay(storeIdx)}
-                className="mt-4 w-full bg-[#0F3D2E] text-white p-3 rounded-xl hover:opacity-95 transition-all duration-200"
+                className="mt-4 w-full bg-[#0F3D2E] text-white p-3 rounded-xl hover:opacity-95 active:scale-[0.98] transition"
               >
                 Pay now
               </button>
@@ -313,6 +317,18 @@ export default function Cart() {
       )} */}
 
       <BottomNav />
+
+      {/* animations */}
+      <style>{`
+        @keyframes rise { 0% {opacity:0; transform: translateY(12px)} 100% {opacity:1; transform: translateY(0)} }
+        @keyframes riseSlow { 0% {opacity:0; transform: translateY(14px)} 100% {opacity:1; transform: translateY(0)} }
+        .animate-rise { animation: rise .5s ease-out both }
+        .animate-rise-slow { animation: riseSlow .65s ease-out both }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
+        }
+      `}</style>
     </main>
   );
 }
