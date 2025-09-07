@@ -13,8 +13,9 @@ import ActiveOrders from "./pages/ActiveOrders.jsx";
 import Profile from "./pages/Profile.jsx";
 import CompletedOrders from "./pages/CompletedOrders.jsx";
 import Search from "./pages/Search.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";  // ← add
-import VerifyOTP from "./pages/VerifyOTP.jsx";          // ← add
+import ResetPassword from "./pages/ResetPassword.jsx";
+import VerifyOTP from "./pages/VerifyOTP.jsx";
+
 import "./index.css";
 
 function RequireAuth({ children }) {
@@ -35,7 +36,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/signin" element={<RequireGuest><SignIn /></RequireGuest>} />
         <Route path="/signup" element={<RequireGuest><SignUp /></RequireGuest>} />
 
-        {/* PUBLIC reset flow so it works even if user is logged in */}
+        {/* Public reset flow */}
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
@@ -48,6 +49,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/completed-orders" element={<RequireAuth><CompletedOrders /></RequireAuth>} />
         <Route path="/search" element={<RequireAuth><Search /></RequireAuth>} />
 
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
