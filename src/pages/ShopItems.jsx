@@ -3,6 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BottomNav from "../pages/BottomNav.jsx";
 
+/* ---------- OPTIONAL API BASE ----------
+   - Same origin API: leave VITE_API_BASE empty (default)
+   - Other domain: set VITE_API_BASE=https://your-domain.com
+----------------------------------------- */
+const API_BASE = import.meta.env.VITE_API_BASE || "";
+
 /* ---------- CATEGORY SETS BY VENDOR TYPE ---------- */
 const CATEGORY_SETS = {
   Shops: ["All", "Pets", "Frozen", "Electronics", "Snacks"],
@@ -10,42 +16,7 @@ const CATEGORY_SETS = {
   Pharmacy: ["All", "Prescription", "OTC", "Personal Care", "Vitamins", "Devices"],
 };
 
-/* ---------- DEMO DATA (replace with your backend data) ---------- */
-const SHOP_ITEMS = [
-  { id: "s1", vendorId: "1", title: "Dog Food", price: 1500, category: "Pets", img: "/dog.jpeg" },
-  { id: "s2", vendorId: "1", title: "French Fries", price: 900, category: "Frozen", img: "/items/fries.jpg", oldPrice: 900 },
-  { id: "s3", vendorId: "2", title: "Wireless Earbuds", price: 7000, category: "Electronics", img: "/items/earbuds.jpg" },
-  { id: "s4", vendorId: "2", title: "Chocolate Cookies", price: 1350, category: "Snacks", img: "/items/cookies.jpg", badge: "10% OFF" },
-];
-
-const RESTAURANT_ITEMS = [
-  { id: "r1", vendorId: "1", title: "Egusi Soup", price: 1200, category: "Soups", img: "/egusi.jpeg" },
-  { id: "r2", vendorId: "1", title: "Jollof Rice", price: 1000, category: "Rice", img: "/jollof.jpeg" },
-  { id: "r3", vendorId: "2", title: "Chicken Suya", price: 1500, category: "Grills", img: "/items/suya.jpg" },
-  { id: "r4", vendorId: "2", title: "Eba & Ogbono", price: 1300, category: "Swallow", img: "/items/ogbono.jpg" },
-
-  // Candles (vendorId "4")
-  { id: "r41", vendorId: "4", title: "Ogbono Soup", price: 1300, category: "Soups", img: "/ogono.jpeg" },
-  { id: "r42", vendorId: "4", title: "Jollof Rice & Chicken", price: 1800, category: "Rice", img: "/jollofrice.jpeg" },
-  { id: "r43", vendorId: "4", title: "Goat Meat Pepper Soup", price: 1900, category: "Soups", img: "/peppersoup.jpeg" },
-  { id: "r44", vendorId: "4", title: "Eba & Egusi", price: 1600, category: "Swallow", img: "/egusi.jpeg" },
-
-  { id: "r45", vendorId: "4", title: "Coca-Cola 50cl",     price: 500,  category: "Drinks", img: "/coke.jpeg" },
-  { id: "r46", vendorId: "4", title: "Fanta 50cl",         price: 500,  category: "Drinks", img: "/fanta.jpeg" },
-  { id: "r47", vendorId: "4", title: "Sprite 50cl",        price: 500,  category: "Drinks", img: "/sprite.jpeg" },
-  { id: "r48", vendorId: "4", title: "Bottled Water 75cl", price: 300,  category: "Drinks", img: "/water.jpeg" },
-  { id: "r49", vendorId: "4", title: "Malt 33cl",          price: 800,  category: "Drinks", img: "/malt.jpeg" },
-  { id: "r50", vendorId: "4", title: "Chapman",            price: 1200, category: "Drinks", img: "/chapman.jpeg" },
-];
-
-const PHARMACY_ITEMS = [
-  { id: "p1", vendorId: "3", title: "Paracetamol 500mg", price: 350, category: "OTC", img: "/paracetamol.jpeg" },
-  { id: "p2", vendorId: "3", title: "Amoxicillin 500mg", price: 1200, category: "Prescription", img: "/items/amox.jpg", rx: true },
-  { id: "p3", vendorId: "3", title: "Vitamin C 1000mg", price: 800, category: "Vitamins", img: "/vitc.jpeg" },
-  { id: "p4", vendorId: "3", title: "Digital Thermometer", price: 2500, category: "Devices", img: "/items/thermo.jpg" },
-];
-
-/* ---------- DEFAULT ADD-ONS for Restaurant (non-Drinks) ---------- */
+/* ---------- FALLBACK ADD-ONS (used if product has none) ---------- */
 const DEFAULT_ADDONS = [
   { id: "meat", label: "Meat", price: 500, max: 2 },
   { id: "fish", label: "Fish", price: 700, max: 2 },
@@ -68,7 +39,8 @@ function addToCartLS(vendorId, vendorName, payload) {
   localStorage.setItem(key, JSON.stringify(cart));
 }
 
-/* ---------- PAGE ---------- */
+const formatNaira = (n) => `₦${Number(n || 0).toLocaleString()}`;
+
 export default function ShopItems() {
   const { id: vendorId } = useParams();
   const { state } = useLocation();
@@ -81,44 +53,107 @@ export default function ShopItems() {
 
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [qty, setQty] = useState({});
-  const [customizing, setCustomizing] = useState(null);
-  const [addonCounts, setAddonCounts] = useState({});
+  const [customizing, setCustomizing] = useState(null); // selected item (restaurant)
+  const [addonCounts, setAddonCounts] = useState({});   // { addonId: number }
+  const [allItems, setAllItems] = useState([]);         // fetched products for this vendor
+  const [loading, setLoading] = useState(true);
 
-  // reset tab on vendor type change
+  // On vendor type change, choose first tab (or requested prefTab)
   useEffect(() => {
     const first = (CATEGORY_SETS[vendorCategory] || CATEGORY_SETS.Shops)[0];
-    setActiveTab(first);
-  }, [vendorCategory]);
+    const desired =
+      state?.prefTab && (CATEGORY_SETS[vendorCategory] || []).includes(state.prefTab)
+        ? state.prefTab
+        : first;
+    setActiveTab(desired);
+  }, [vendorCategory, state?.prefTab]);
 
-  // items for current vendor + tab
+  // Fetch products from API for this vendor
+  useEffect(() => {
+    let alive = true;
+    async function run() {
+      try {
+        setLoading(true);
+
+        const url =
+          vendorId
+            ? `${API_BASE}/api/products?vendorId=${encodeURIComponent(vendorId)}`
+            : `${API_BASE}/api/products`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const list = (data.products || []).map((p) => {
+          // Safe parse addons (DB may return TEXT)
+          let addons = [];
+          if (Array.isArray(p.addons)) {
+            addons = p.addons;
+          } else if (typeof p.addons === "string") {
+            try {
+              const parsed = JSON.parse(p.addons);
+              if (Array.isArray(parsed)) addons = parsed;
+            } catch {
+              addons = [];
+            }
+          }
+
+          return {
+            id: p.id,
+            vendorId: String(p.vendor_id ?? p.vendorId ?? ""),
+            title: p.title,
+            price: Number(p.price),
+            category: p.category,
+            img: p.image_url || p.imageUrl || "", // prefer DB column, fallback to JSON field
+            addons,
+            rx: p.rx || false, // pharmacy flag if you ever store it
+            oldPrice: p.old_price || null,
+            badge: p.badge || null,
+          };
+        });
+
+        if (alive) setAllItems(list);
+      } catch (e) {
+        console.error("Failed to load products:", e);
+        if (alive) setAllItems([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+    run();
+    return () => { alive = false; };
+  }, [vendorId]);
+
+  // Visible items for current vendor + tab
   const items = useMemo(() => {
-    const src =
-      vendorCategory === "Restaurant" ? RESTAURANT_ITEMS :
-      vendorCategory === "Pharmacy"  ? PHARMACY_ITEMS  :
-                                       SHOP_ITEMS;
-
-    const scoped = src.filter((i) => !vendorId || String(i.vendorId) === String(vendorId));
+    const scoped = vendorId
+      ? allItems.filter((i) => String(i.vendorId) === String(vendorId))
+      : allItems;
     return activeTab === "All"
       ? scoped
       : scoped.filter((i) => (i.category || "").toLowerCase() === activeTab.toLowerCase());
-  }, [vendorCategory, vendorId, activeTab]);
+  }, [allItems, vendorId, activeTab]);
 
-  // default qty = 1 per visible item
+  // Default qty = 1 whenever visible items change (for non-modal flows)
   useEffect(() => {
     const m = {};
     items.forEach((i) => (m[i.id] = 1));
     setQty(m);
   }, [items]);
 
+  /* ---------- Qty helpers (non-modal) ---------- */
   const dec = (id) => setQty((q) => ({ ...q, [id]: Math.max((q[id] || 1) - 1, 1) }));
   const inc = (id) => setQty((q) => ({ ...q, [id]: (q[id] || 1) + 1 }));
 
-  // modal helpers
+  /* ---------- Modal helpers ---------- */
   const openCustomize = (item) => {
+    // Only for restaurant non-Drinks
     if (vendorCategory !== "Restaurant" || (item.category || "").toLowerCase() === "drinks") return;
     setCustomizing(item);
+    // Build counts map from product's own addons (fallback to defaults)
+    const baseAddons = (item.addons && item.addons.length ? item.addons : DEFAULT_ADDONS);
     const init = {};
-    DEFAULT_ADDONS.forEach((a) => (init[a.id] = 0));
+    baseAddons.forEach((a) => (init[a.id] = 0));
     setAddonCounts(init);
   };
   const closeCustomize = () => setCustomizing(null);
@@ -128,33 +163,45 @@ export default function ShopItems() {
   const subAddon = (id) =>
     setAddonCounts((m) => ({ ...m, [id]: Math.max((m[id] || 0) - 1, 0) }));
 
-  const formatNaira = (n) => `₦${Number(n || 0).toLocaleString()}`;
+  // Choose the active list of addons for the modal (product-defined or defaults)
+  const modalAddons = useMemo(() => {
+    if (!customizing) return [];
+    return customizing.addons && customizing.addons.length ? customizing.addons : DEFAULT_ADDONS;
+  }, [customizing]);
 
   const modalTotal = useMemo(() => {
     if (!customizing) return 0;
     const base = customizing.price || 0;
-    const extras = DEFAULT_ADDONS.reduce(
-      (sum, a) => sum + (addonCounts[a.id] || 0) * a.price,
+    const extras = modalAddons.reduce(
+      (sum, a) => sum + (addonCounts[a.id] || 0) * Number(a.price || 0),
       0
     );
     return base + extras;
-  }, [customizing, addonCounts]);
+  }, [customizing, addonCounts, modalAddons]);
 
   const addCustomizedToCart = () => {
     if (!customizing) return;
-    const chosen = DEFAULT_ADDONS
+
+    // Build options payload from chosen add-ons
+    const chosen = modalAddons
       .filter((a) => (addonCounts[a.id] || 0) > 0)
-      .map((a) => ({ id: a.id, label: a.label, qty: addonCounts[a.id], unitPrice: a.price }));
+      .map((a) => ({
+        id: a.id,
+        label: a.label,
+        qty: addonCounts[a.id],
+        unitPrice: Number(a.price || 0),
+      }));
 
     addToCartLS(vendorId, vendorName, {
       id: customizing.id,
       title: customizing.title,
       img: customizing.img,
       basePrice: customizing.price,
-      price: modalTotal,
-      qty: 1,
+      price: modalTotal,     // base + add-ons
+      qty: 1,                // main dish qty = 1 for this flow
       options: chosen.length ? { addons: chosen } : undefined,
     });
+
     closeCustomize();
   };
 
@@ -202,7 +249,11 @@ export default function ShopItems() {
       </header>
 
       {/* BODY */}
-      {vendorCategory === "Pharmacy" ? (
+      {loading ? (
+        <section className="max-w-screen-sm mx-auto p-4">
+          <p className="text-center text-sm text-gray-500">Loading items…</p>
+        </section>
+      ) : vendorCategory === "Pharmacy" ? (
         <section className="max-w-screen-sm mx-auto p-4 space-y-3">
           {items.length === 0 ? (
             <p className="text-center text-sm text-gray-500">No items yet.</p>
@@ -337,6 +388,7 @@ export default function ShopItems() {
       {customizing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-md bg-white rounded-3xl shadow-xl relative animate-pop">
+            {/* Close */}
             <button
               onClick={closeCustomize}
               className="absolute top-3 right-4 text-2xl leading-none text-gray-500"
@@ -345,38 +397,57 @@ export default function ShopItems() {
               ×
             </button>
 
+            {/* Title & image */}
             <div className="px-6 pt-6 text-center">
               <h2 className="text-2xl font-bold text-[#0F3D2E]">{customizing.title}</h2>
-              <img
-                src={customizing.img}
-                alt={customizing.title}
-                className="mx-auto mt-3 h-28 w-48 object-cover rounded-2xl"
-              />
+              {customizing.img ? (
+                <img
+                  src={customizing.img}
+                  alt={customizing.title}
+                  className="mx-auto mt-3 h-28 w-48 object-cover rounded-2xl"
+                />
+              ) : null}
               <p className="mt-2 text-[#0F3D2E]/60">Choose add-ons</p>
             </div>
 
+            {/* Add-ons */}
             <div className="px-6 mt-4">
               <h3 className="text-lg font-semibold text-[#0F3D2E] mb-2">Add-ons</h3>
+
               <div className="space-y-3">
-                {DEFAULT_ADDONS.map((a) => (
+                {modalAddons.map((a) => (
                   <div
                     key={a.id}
                     className="border border-gray-200 rounded-xl px-4 py-3 flex items-center justify-between"
                   >
                     <div>
                       <div className="text-[17px] font-semibold text-[#0F3D2E]">{a.label}</div>
-                      <div className="text-[#0F3D2E]/50 -mt-0.5">{formatNaira(a.price)}</div>
+                      <div className="text-[#0F3D2E]/50 -mt-0.5">{formatNaira(a.price || 0)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => subAddon(a.id)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">–</button>
+                      <button
+                        onClick={() => subAddon(a.id)}
+                        className="h-10 w-10 rounded-lg border border-gray-300 text-xl"
+                      >
+                        –
+                      </button>
                       <div className="w-6 text-center">{addonCounts[a.id] || 0}</div>
-                      <button onClick={() => addAddon(a.id, a.max)} className="h-10 w-10 rounded-lg border border-gray-300 text-xl">+</button>
+                      <button
+                        onClick={() => addAddon(a.id, a.max)}
+                        className="h-10 w-10 rounded-lg border border-gray-300 text-xl"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
                 ))}
+                {!modalAddons.length && (
+                  <div className="text-sm text-gray-500">No add-ons available for this item.</div>
+                )}
               </div>
             </div>
 
+            {/* Total + CTA */}
             <div className="px-6 mt-5 mb-6 flex items-center justify-between">
               <div className="text-lg font-semibold text-[#0F3D2E]">Total</div>
               <div className="text-2xl font-bold text-[#0F3D2E]">{formatNaira(modalTotal)}</div>

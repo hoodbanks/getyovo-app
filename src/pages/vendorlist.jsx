@@ -1,9 +1,15 @@
+// src/pages/VendorList.jsx
 import { useState, useRef, useEffect } from "react";
 import BottomNav from "../pages/BottomNav.jsx";
 import { LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 
-/* Helpers (unchanged) */
+/* Optional API base (same pattern you used elsewhere)
+   - Same-origin API: leave VITE_API_BASE empty (default "")
+   - Separate domain (e.g. vendor subdomain): set VITE_API_BASE=https://vendor.getyovonow.com in .env  */
+const API_BASE = import.meta.env.VITE_API_BASE || "";
+
+/* Helpers */
 function getDistanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -57,15 +63,35 @@ function Stars({ value = 4.5, outOf = 5 }) {
   );
 }
 
+/* Time helpers */
+function hmToMins(hhmm = "00:00") {
+  const [h, m] = (hhmm || "00:00").split(":").map((x) => parseInt(x, 10) || 0);
+  return h * 60 + m;
+}
+function computeOpenNow(openingTime, closingTime) {
+  if (!openingTime || !closingTime) return null;
+  const now = new Date();
+  const nowM = now.getHours() * 60 + now.getMinutes();
+  const o = hmToMins(openingTime);
+  const c = hmToMins(closingTime);
+  // Handle normal and overnight ranges
+  if (o <= c) return nowM >= o && nowM < c;
+  return nowM >= o || nowM < c;
+}
+
 export default function VendorList() {
   const navigate = useNavigate();
 
+  // You can keep hours empty here; if your API returns hours they’ll override.
   const [vendors] = useState([
-    { id: 1, name: "Roban Mart", category: "Shops", image: "/roban.jpeg", deliveryTime: "25-45 min", rating: 4.5, lat: 6.2239, lng: 7.1185 },
-    { id: 2, name: "FreshMart", category: "Shops", image: "/freshmart.jpeg", deliveryTime: "20-35 min", rating: 4.2, lat: 6.2242, lng: 7.1190 },
-    { id: 3, name: "PharmaPlus", category: "Pharmacy", image: "/pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
-    { id: 4, name: "Candles", category: "Restaurant", image: "/candles.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175 },
+    { id: 1, name: "Roban Mart",  category: "Shops",      image: "/roban.jpeg",     deliveryTime: "25-45 min", rating: 4.5, lat: 6.2239, lng: 7.1185, openingTime: "08:00", closingTime: "21:00" },
+    { id: 2, name: "FreshMart",   category: "Shops",      image: "/freshmart.jpeg",  deliveryTime: "20-35 min", rating: 4.2, lat: 6.2242, lng: 7.1190, openingTime: "09:00", closingTime: "20:00" },
+    { id: 3, name: "PharmaPlus",  category: "Pharmacy",   image: "/pharmaplus.jpeg", deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175, openingTime: "08:30", closingTime: "19:30" },
+    { id: 4, name: "Candles",     category: "Restaurant", image: "/candles.jpeg",    deliveryTime: "15-30 min", rating: 4.8, lat: 6.2234, lng: 7.1175, openingTime: "10:00", closingTime: "22:00" },
   ]);
+
+  // hoursMap: { [vendorId]: { openingTime, closingTime } }
+  const [hoursMap, setHoursMap] = useState({});
 
   const [search, setSearch] = useState(() => localStorage.getItem("search") || "");
   const [selectedCategory, setSelectedCategory] = useState(() => localStorage.getItem("category") || "All");
@@ -110,7 +136,45 @@ export default function VendorList() {
     );
   };
 
-  // Filtering (same, with "All")
+  /* 🔌 OPTIONAL: Fetch hours from your API if available */
+  useEffect(() => {
+    let alive = true;
+    async function fetchHoursFor(id) {
+      try {
+        if (!API_BASE) return null;
+        const res = await fetch(`${API_BASE}/api/vendor-settings?vendorId=${id}`);
+        if (!res.ok) return null;
+        const data = await res.json().catch(() => ({}));
+        const s = data?.settings || data;
+        if (s?.openingTime && s?.closingTime) {
+          return { openingTime: s.openingTime, closingTime: s.closingTime };
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    }
+    (async () => {
+      const entries = await Promise.all(
+        vendors.map(async (v) => {
+          const fromApi = await fetchHoursFor(v.id);
+          if (fromApi) return [String(v.id), fromApi];
+          if (v.openingTime && v.closingTime) {
+            return [String(v.id), { openingTime: v.openingTime, closingTime: v.closingTime }];
+          }
+          return null;
+        })
+      );
+      const map = {};
+      entries.forEach((e) => {
+        if (e) map[e[0]] = e[1];
+      });
+      if (alive) setHoursMap(map);
+    })();
+    return () => { alive = false; };
+  }, [vendors]);
+
+  // Filtering (same)
   let filteredVendors = vendors.filter((v) => {
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase());
     if (search) return matchesSearch;
@@ -130,7 +194,7 @@ export default function VendorList() {
 
   return (
     <main className="pb-20 bg-[#F7F9F5]">
-      {/* HEADER (top row fixed to h-16) */}
+      {/* HEADER */}
       <nav className="border-b border-gray-200 top-0 z-50 sticky bg-white">
         <div className="h-16 flex items-center justify-evenly px-2">
           <img src="/yov.png" alt="GetYovo" className="w-20" />
@@ -164,7 +228,7 @@ export default function VendorList() {
           />
         </div>
 
-        {/* CATEGORIES — single horizontal row, scrollable + snap + hidden scrollbar */}
+        {/* CATEGORIES */}
         <div className="px-3 pb-3 animate-rise">
           <div className="flex gap-2 justify-evenly overflow-x-auto flex-nowrap no-scrollbar snap-x snap-mandatory py-1 -mx-1 px-1">
             {["All", "Restaurant", "Shops", "Pharmacy"].map((c, i) => {
@@ -199,6 +263,13 @@ export default function VendorList() {
               ? getDeliveryTime(vendor.lat, vendor.lng, userLocation.lat, userLocation.lng)
               : vendor.deliveryTime;
 
+            // Merge hours: prefer fetched, else vendor defaults
+            const hv = hoursMap[String(vendor.id)] || {};
+            const openingTime = hv.openingTime || vendor.openingTime;
+            const closingTime = hv.closingTime || vendor.closingTime;
+            const hasHours = Boolean(openingTime && closingTime);
+            const openNow = hasHours ? computeOpenNow(openingTime, closingTime) : null;
+
             return (
               <div
                 key={vendor.id}
@@ -213,16 +284,32 @@ export default function VendorList() {
                   alt={vendor.name}
                 />
 
-                {/* text column wraps fully */}
+                {/* vertical stack: name → ETA → hours → rating */}
                 <div className="flex-1 basis-0">
-                  <p className="text-[17px] font-semibold text-[#0F3D2E]
-                                whitespace-normal break-all sm:break-words leading-snug">
-                    {vendor.name}
-                  </p>
-                  <p className="text-sm text-[#0F3D2E]/70">{eta}</p>
-                  <div className="mt-1 flex items-center gap-1">
-                    <Stars value={vendor.rating} />
-                    <span className="text-sm text-[#0F3D2E]/70">{vendor.rating.toFixed(1)}</span>
+                  <div className="flex flex-col space-y-1">
+                    {/* Store name */}
+                    <p className="text-[17px] font-semibold text-[#0F3D2E] leading-snug break-words">
+                      {vendor.name}
+                    </p>
+
+                    {/* Arrival time / ETA */}
+                    <p className="text-sm text-[#0F3D2E]/70">{eta}</p>
+
+                    {/* Opening–Closing + status */}
+                    {hasHours && (
+                      <p className="text-sm text-[#0F3D2E]/70">
+                        {openingTime}–{closingTime} •{" "}
+                        <span className={openNow ? "text-emerald-600" : "text-gray-500"}>
+                          {openNow ? "Open now" : "Closed"}
+                        </span>
+                      </p>
+                    )}
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-1">
+                      <Stars value={vendor.rating} />
+                      <span className="text-sm text-[#0F3D2E]/70">{vendor.rating.toFixed(1)}</span>
+                    </div>
                   </div>
                 </div>
 

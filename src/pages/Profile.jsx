@@ -16,9 +16,13 @@ export default function Profile() {
 
   const userName  = localStorage.getItem("userName")  || "GetYovo User";
   const userPhone = localStorage.getItem("userPhone") || "—";
+
   const completedCount = useMemo(() => {
-    try { return (JSON.parse(localStorage.getItem(COMPLETED_KEY) || "[]") || []).length; }
-    catch { return 0; }
+    try {
+      return (JSON.parse(localStorage.getItem(COMPLETED_KEY) || "[]") || []).length;
+    } catch {
+      return 0;
+    }
   }, []);
 
   const logout = () => {
@@ -40,7 +44,10 @@ export default function Profile() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-screen-sm mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#0F3D2E]">Profile</h1>
-          <button onClick={logout} className="text-sm font-semibold text-white bg-[#0F3D2E] px-3 py-2 rounded-lg">
+          <button
+            onClick={logout}
+            className="text-sm font-semibold text-white bg-[#0F3D2E] px-3 py-2 rounded-lg"
+          >
             Log out
           </button>
         </div>
@@ -75,24 +82,34 @@ export default function Profile() {
           </div>
         </NavLink>
 
-        {/* Contact Us (expand on click) */}
-        <button
-          type="button"
-          onClick={() => setShowContact(s => !s)}
-          className="w-full text-left bg-white rounded-2xl border border-[#0F3D2E]/12 p-4 hover:bg-[#F8FAF9] transition"
-        >
-          <div className="flex items-center justify-between">
-            <div>
+        {/* Contact Us (accessible, no nested interactive inside a button) */}
+        <div className="bg-white rounded-2xl border border-[#0F3D2E]/12 p-4">
+          {/* Toggle header row */}
+          <button
+            type="button"
+            onClick={() => setShowContact((s) => !s)}
+            aria-expanded={showContact}
+            aria-controls="contact-panel"
+            className="w-full flex items-center justify-between hover:bg-[#F8FAF9] rounded-xl px-2 py-2 transition"
+          >
+            <div className="text-left">
               <div className="font-semibold text-[#0F3D2E]">Contact Us</div>
               <div className="text-sm text-[#0F3D2E]/70">We’re here to help</div>
             </div>
-            <span className={`text-[#0F3D2E]/60 text-xl transition-transform ${showContact ? "rotate-90" : ""}`}>
+            <span
+              className={`text-[#0F3D2E]/60 text-xl transition-transform ${showContact ? "rotate-90" : ""}`}
+              aria-hidden="true"
+            >
               ›
             </span>
-          </div>
+          </button>
 
+          {/* Collapsible content */}
           {showContact && (
-            <div className="mt-4 pt-4 border-t border-[#0F3D2E]/10 space-y-3">
+            <div
+              id="contact-panel"
+              className="mt-4 pt-4 border-t border-[#0F3D2E]/10 space-y-3"
+            >
               {/* Phone */}
               <div className="flex items-center justify-between">
                 <div>
@@ -102,11 +119,14 @@ export default function Profile() {
                   </a>
                 </div>
                 <div className="flex gap-2">
-                  <a href={`tel:${SUPPORT_PHONE}`} className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm">
+                  <a
+                    href={`tel:${SUPPORT_PHONE}`}
+                    className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm"
+                  >
                     Call
                   </a>
                   <button
-                    onClick={(e) => { e.stopPropagation(); copy(SUPPORT_PHONE); }}
+                    onClick={() => copy(SUPPORT_PHONE)}
                     className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
                   >
                     Copy
@@ -130,7 +150,7 @@ export default function Profile() {
                     Chat
                   </a>
                   <button
-                    onClick={(e) => { e.stopPropagation(); copy(WHATSAPP_NUMBER); }}
+                    onClick={() => copy(WHATSAPP_NUMBER)}
                     className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
                   >
                     Copy
@@ -147,11 +167,14 @@ export default function Profile() {
                   </a>
                 </div>
                 <div className="flex gap-2">
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm">
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}?subject=Support%20Request&body=Hi%20GetYovo%20Support,%0A%0A`}
+                    className="px-3 py-1.5 rounded-lg bg-[#0F3D2E] text-white text-sm"
+                  >
                     Email
                   </a>
                   <button
-                    onClick={(e) => { e.stopPropagation(); copy(SUPPORT_EMAIL); }}
+                    onClick={() => copy(SUPPORT_EMAIL)}
                     className="px-3 py-1.5 rounded-lg border border-[#0F3D2E]/20 text-[#0F3D2E] text-sm"
                   >
                     Copy
@@ -162,7 +185,7 @@ export default function Profile() {
               <div className="text-xs text-[#0F3D2E]/60">Hours: 8:00–20:00 (Mon–Sat)</div>
             </div>
           )}
-        </button>
+        </div>
       </section>
 
       <BottomNav />
